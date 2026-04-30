@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptive Shield — Вход</title>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f6f6f6;--white:#fff;--ink:#1d1d1f;--mid:#6e6e73;
+  --brd:#d2d2d7;--acc:#f6821f;--blue:#1a56db;
+  --grn:#16a34a;--red:#dc2626;--amb:#d97706;
+}
+body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:grid;place-items:center;-webkit-font-smoothing:antialiased}
+.page{width:100%;max-width:420px;padding:24px}
+
+/* LOGO */
+.logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:32px}
+.logo-mark{width:32px;height:32px;background:var(--acc);border-radius:4px;display:grid;place-items:center}
+.logo-mark svg{width:18px;height:18px;fill:#fff}
+.logo-name{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.4px}
+
+/* CARD */
+.card{background:#fff;border:1px solid var(--brd);border-radius:14px;padding:32px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+.card-title{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-.4px}
+.card-sub{font-size:13px;color:var(--mid);margin-bottom:28px}
+
+/* FORM */
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:.1px}
+.fg input{width:100%;padding:11px 13px;border:1.5px solid var(--brd);border-radius:8px;font-size:14px;font-family:'Epilogue',sans-serif;color:var(--ink);background:#fff;outline:none;transition:border .15s,box-shadow .15s}
+.fg input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(246,130,31,.12)}
+.fg input::placeholder{color:#b0b0b8}
+
+.btn-submit{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:'Epilogue',sans-serif;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;margin-top:4px}
+.btn-submit:hover{background:#e07318;transform:translateY(-1px);box-shadow:0 6px 20px rgba(246,130,31,.3)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-submit .spin{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.btn-submit.loading .btn-txt{opacity:0}
+.btn-submit.loading .spin{display:block}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* ALERTS */
+.alert{display:none;padding:11px 13px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:16px;line-height:1.5}
+.alert.show{display:block}
+.alert-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.alert-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.alert-ban{background:#1a0000;border:1px solid #7f1d1d;color:#fca5a5}
+.alert-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+
+/* ATTEMPTS */
+.tries{margin:10px 0 16px;height:3px;background:#f3f4f6;border-radius:2px;overflow:hidden}
+.tries-fill{height:100%;border-radius:2px;background:var(--grn);width:100%;transition:width .35s,background .35s}
+
+/* DIVIDER */
+.div{display:flex;align-items:center;gap:10px;margin:20px 0;color:#c7c7cc;font-size:11px}
+.div::before,.div::after{content:'';flex:1;height:1px;background:#e5e5ea}
+
+/* DEMO */
+.demo{background:#f9f9fb;border:1px solid var(--brd);border-radius:8px;padding:14px}
+.demo-title{font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.cred{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--brd);font-size:12px;cursor:pointer;transition:background .1s;border-radius:4px;padding-left:4px}
+.cred:last-child{border:none}
+.cred:hover{background:#f0f0f5}
+.cred-u{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--ink)}
+.cred-p{font-family:'JetBrains Mono',monospace;color:var(--mid);position:relative}
+.cred-reveal{display:none;position:absolute;left:0;background:var(--bg2);padding:0 4px;border-radius:4px;white-space:nowrap;color:var(--ink);font-weight:600}
+.cred:hover .cred-reveal{display:inline}
+.cred-p{font-family:'JetBrains Mono',monospace;color:var(--mid)}
+.tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;text-align:center}
+.tag-admin{background:#fef3c7;color:#92400e}
+.tag-user{background:#f3f4f6;color:#6b7280}
+
+/* LOG */
+.log{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mid);max-height:100px;overflow-y:auto;line-height:2;scrollbar-width:none}
+.log::-webkit-scrollbar{display:none}
+
+/* FOOTER */
+.pg-foot{text-align:center;margin-top:20px;font-size:12px;color:var(--mid)}
+.pg-foot a{color:var(--acc);font-weight:600}
+
+/* SHIELD BADGE */
+
+
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12 3L4 7v5c0 4.55 3.4 8.81 8 9.93C17.6 20.81 21 16.55 21 12V7l-9-4z" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M12 7.5L7.5 10v3c0 2.73 2.04 5.29 5 5.96 2.96-.67 5-3.23 5-5.96v-3L12 7.5z" fill="white"/></svg></div>
+    <span class="logo-name">Adaptive Shield</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Вход в систему</div>
+    <div class="card-sub">Доступ к панели защиты</div>
+
+    <div class="alert alert-err" id="aErr">Неверный логин или пароль</div>
+    <div class="alert alert-warn" id="aWarn">Слишком много попыток — подождите</div>
+    <div class="alert alert-ban" id="aBan">Ваш IP заблокирован системой Adaptive Shield</div>
+    <div class="alert alert-ok" id="aOk">Вход выполнен — перенаправление...</div>
+
+    <div class="fg">
+      <label>Имя пользователя</label>
+      <input id="username" type="text" placeholder="Введите логин" autocomplete="username">
+    </div>
+    <div class="fg">
+      <label>Пароль</label>
+      <input id="password" type="password" placeholder="Введите пароль" autocomplete="current-password">
+    </div>
+
+    <div class="tries"><div class="tries-fill" id="triesFill"></div></div>
+
+    <button class="btn-submit" id="loginBtn" onclick="doLogin()">
+      <span class="btn-txt">Войти</span>
+      <div class="spin"></div>
+    </button>
+
+    <div class="div" style="cursor:pointer;user-select:none" onclick="toggleDemo()" title="Показать тестовые аккаунты">тестовые аккаунты ▾</div>
+
+    <div class="demo" id="demoBox" style="display:none">
+      <div class="demo-title">Тестовые аккаунты</div>
+      <div class="cred" onclick="fill('admin','admin123')">
+        <span class="cred-u">admin</span><span class="cred-p">••••••••<span class="cred-reveal">admin123</span></span><span class="tag tag-admin">ADMIN</span>
+      </div>
+      <div class="cred" onclick="fill('user','password')">
+        <span class="cred-u">user</span><span class="cred-p">••••••••<span class="cred-reveal">password</span></span><span class="tag tag-user">USER</span>
+      </div>
+      <div class="cred" onclick="fill('test','test123')">
+        <span class="cred-u">test</span><span class="cred-p">••••••••<span class="cred-reveal">test123</span></span><span class="tag tag-user">USER</span>
+      </div>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="pg-foot">
+    <a href="index.html">← На главную</a>
+  </div>
+</div>
+
+
+</div>
+
+<script>
+const API = 'http://shield.local:8000';
+let fails = 0;
+const MAX = 5;
+
+function fill(u, p){
+  document.getElementById('username').value = u;
+  document.getElementById('password').value = p;
+  document.getElementById('username').focus();
+}
+
+function hideAll(){ ['aErr','aWarn','aBan','aOk'].forEach(id=>document.getElementById(id).classList.remove('show')); }
+
+function updateBar(){
+  const pct = (fails/MAX)*100;
+  const f = document.getElementById('triesFill');
+  f.style.width = (100-pct)+'%';
+  f.style.background = pct>=80?'#dc2626':pct>=40?'#d97706':'#16a34a';
+}
+
+function addLog(msg, color='#6e6e73'){
+  const el = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  el.innerHTML = `<div style="color:${color}">[${t}] ${msg}</div>` + el.innerHTML;
+}
+
+function toggleDemo(){
+  const box = document.getElementById('demoBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function doLogin(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if(!u||!p) return;
+  hideAll();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  // Always clear old session before new login
+  localStorage.clear();
+  try{
+    const r = await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d = await r.json();
+    console.log('Login response:', d); // debug
+    if(r.status===200&&(d.success||d.token||d.access_token)){
+      // Clear old data first
+      localStorage.clear();
+      // Support different API response formats
+      const token = d.token || d.access_token || 'demo';
+      const role  = d.role  || d.user_role   || (u==='admin'?'admin':'user');
+      document.getElementById('aOk').classList.add('show');
+      addLog(`${u} → 200 OK  role:${role}`, '#16a34a');
+      localStorage.setItem('as_user',  u);
+      localStorage.setItem('as_role',  role);
+      localStorage.setItem('as_token', token);
+      // Save token to cookie for backend dashboard auth check
+      document.cookie = `as_token=${token}; path=/; max-age=86400`;
+      fails=0; updateBar();
+      // Admin → dashboard, User → account
+      setTimeout(()=>{
+        if(role === 'admin'){
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = 'account.html';
+        }
+      }, 1000);
+    } else if(r.status===429){
+      document.getElementById('aWarn').textContent = `Слишком много попыток — ${d.lockout_remaining?'подождите '+d.lockout_remaining+'с':''}`;
+      document.getElementById('aWarn').classList.add('show');
+      addLog(`${u} → 429 RATE LIMITED`, '#d97706');
+    } else if(r.status===403){
+      document.getElementById('aBan').classList.add('show');
+      addLog(`${u} → 403 BANNED`, '#dc2626');
+    } else {
+      fails++;
+      document.getElementById('aErr').textContent = `Неверные данные — попытка ${fails} из ${MAX}`;
+      document.getElementById('aErr').classList.add('show');
+      addLog(`${u}:${p} → 401 Unauthorized`, '#9ca3af');
+      updateBar();
+    }
+  }catch(e){
+    document.getElementById('aErr').textContent = 'Не удаётся подключиться к серверу';
+    document.getElementById('aErr').classList.add('show');
+  }
+  document.getElementById('password').value='';
+  btn.disabled=false; btn.classList.remove('loading');
+}
+
+document.addEventListener('keypress', e=>{ if(e.key==='Enter') doLogin(); });
+
+// Shield status
+
+</script>
+</body>
+</html>

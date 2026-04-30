@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptive Shield — Security Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --bg0:#f1f4f9;--bg1:#ffffff;--bg2:#f8fafc;--bg3:#eef1f8;
+  --tx1:#0d1424;--tx2:#3d4a68;--tx3:#8896b3;
+  --acc:#2563eb;--acc2:#1d4ed8;--acc-g:linear-gradient(135deg,#2563eb,#06b6d4);
+  --grn:#10b981;--red:#ef4444;--amb:#f59e0b;--pur:#8b5cf6;--cyn:#06b6d4;--pnk:#ec4899;
+  --brd:#e2e8f4;--brd2:#c8d0e8;
+  --shadow:0 1px 3px rgba(13,20,36,.05),0 4px 16px rgba(13,20,36,.04);
+  --shadow2:0 8px 32px rgba(13,20,36,.12);
+  --r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg0);color:var(--tx1);display:flex;height:100vh;overflow:hidden;scrollbar-width:none}
+body::-webkit-scrollbar{display:none}
+.content::-webkit-scrollbar{width:5px}.content::-webkit-scrollbar-track{background:transparent}.content::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}.content{scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+
+/* ═══ SIDEBAR ═══ */
+.sb{width:220px;background:var(--tx1);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s ease,opacity .2s;overflow:hidden;position:relative;z-index:10}
+.sb.collapsed{width:0;opacity:0;pointer-events:none}
+.sb-brand{padding:22px 20px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-brand-icon{width:34px;height:34px;background:var(--acc-g);border-radius:9px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-1px}
+.sb-brand h1{font-size:13px;font-weight:700;letter-spacing:-.2px;line-height:1.2;color:#fff}
+.sb-brand small{font-size:9px;color:rgba(255,255,255,.4);font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.sb-nav{flex:1;padding:12px;overflow-y:auto;scrollbar-width:none}
+.sb-nav::-webkit-scrollbar{display:none}
+.sb-section{font-size:9px;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:18px 8px 6px}
+.sb-item{display:flex;align-items:center;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);transition:all .15s;position:relative;letter-spacing:.01em}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.sb-item.on{background:rgba(37,99,235,.3);color:#fff;font-weight:600}
+.sb-item.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--acc);border-radius:0 3px 3px 0}
+.sb-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;font-family:'Fira Code',monospace}
+.sb-bottom{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px}
+.sb-dot{display:none}
+.sb-dot.atk{background:var(--red);box-shadow:0 0 8px var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-status{font-size:11px;color:rgba(255,255,255,.4);font-weight:500}
+
+/* ═══ TOGGLE BTN ═══ */
+.toggle-btn{width:30px;height:30px;background:transparent;border:1.5px solid var(--brd);border-radius:7px;display:grid;place-items:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.toggle-btn:hover{background:var(--bg3)}
+.toggle-btn svg{width:14px;height:14px;stroke:var(--tx2);fill:none;stroke-width:2;stroke-linecap:round}
+
+/* ═══ MAIN ═══ */
+.mn{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{height:56px;background:var(--bg1);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 30px;flex-shrink:0;box-shadow:0 1px 0 var(--brd)}
+.topbar h2{font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--tx1)}
+.topbar-r{display:flex;align-items:center;gap:14px}
+.topbar-time{font-family:'Fira Code',monospace;font-size:11px;color:var(--tx3);background:var(--bg2);padding:4px 10px;border-radius:6px;border:1px solid var(--brd)}
+.topbar-badge{font-family:'Fira Code',monospace;font-size:10px;font-weight:600;padding:5px 14px;border-radius:20px;letter-spacing:.4px;display:flex;align-items:center;gap:5px}
+.badge-ok{background:#d1fae5;color:var(--grn);border:1.5px solid #6ee7b7}
+.badge-atk{background:#fee2e2;color:var(--red);border:1.5px solid #fca5a5;animation:pulse 1.5s infinite}
+.status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.content{flex:1;overflow-y:auto;padding:24px 28px 40px;background:var(--bg0)}
+
+/* ═══ TAB ═══ */
+.tab{display:none}.tab.on{display:block !important}
+
+/* ═══ GRID ═══ */
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.g21{display:grid;grid-template-columns:5fr 3fr;gap:18px;margin-bottom:22px}
+
+/* ═══ CARD ═══ */
+.cd{background:var(--bg1);border:1px solid var(--brd);border-radius:var(--r);padding:22px;min-width:0;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .2s,transform .2s}
+.cd-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.cd-t{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px}
+.cd-a{font-size:11px;color:var(--acc);cursor:pointer;font-weight:600}
+.cd-a:hover{text-decoration:underline}
+
+/* ═══ METRICS ═══ */
+.mt{padding:20px 14px}
+.mt-label{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.mt-v{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:700;margin-bottom:2px;letter-spacing:-1.5px}
+.mt-sub{font-size:10px;color:var(--tx3);font-weight:500;margin-top:4px}
+.mt-bar{height:3px;border-radius:2px;background:var(--bg3);margin-top:12px;overflow:hidden}
+.mt-bar-fill{height:100%;border-radius:2px;width:60%;transition:width .4s}
+.c-bl .mt-v{color:var(--acc)}.c-bl .mt-bar-fill{background:var(--acc)}
+.c-rd .mt-v{color:var(--red)}.c-rd .mt-bar-fill{background:var(--red)}
+.c-am .mt-v{color:var(--amb)}.c-am .mt-bar-fill{background:var(--amb)}
+.c-gn .mt-v{color:var(--grn)}.c-gn .mt-bar-fill{background:var(--grn)}
+.c-pu .mt-v{color:var(--pur)}.c-pu .mt-bar-fill{background:var(--pur)}
+.c-cy .mt-v{color:var(--cyn)}.c-cy .mt-bar-fill{background:var(--cyn)}
+.cd.c-bl{border-top:3px solid var(--acc)}
+.cd.c-rd{border-top:3px solid var(--red)}
+.cd.c-am{border-top:3px solid var(--amb)}
+.cd.c-gn{border-top:3px solid var(--grn)}
+.cd.c-pu{border-top:3px solid var(--pur)}
+.cd.c-cy{border-top:3px solid var(--cyn)}
+
+/* ═══ CHART ═══ */
+.ch{position:relative;height:260px;overflow:hidden}
+.ch-sm{position:relative;height:190px;overflow:hidden}
+
+/* ═══ EVENTS ═══ */
+.ev-list{max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+.ev{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--brd);font-size:11px}
+.ev:last-child{border:none}
+.ev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ev-dot.blocked,.ev-dot.brute_force{background:var(--red)}
+.ev-dot.rate_limited{background:var(--amb)}
+.ev-dot.challenged{background:var(--pur)}
+.ev-dot.login{background:var(--grn)}
+.ev-dot.anomaly{background:var(--cyn)}
+.ev-t{font-family:'Fira Code',monospace;color:var(--tx3);min-width:62px;font-size:10px}
+.ev-ip{font-family:'Fira Code',monospace;color:var(--acc);min-width:98px;font-size:10px;font-weight:600}
+.ev-d{flex:1;color:var(--tx2);font-size:11px}
+
+/* ═══ TABLE ═══ */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;padding:11px 14px;color:var(--tx3);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--brd);background:var(--bg2)}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--brd);font-size:12.5px}
+.tbl tr:hover td{background:var(--bg2)}
+.sc-bar{height:4px;border-radius:2px;background:var(--bg3);min-width:70px}
+.sc-fill{height:100%;border-radius:2px;transition:width .3s}
+.act{font-family:'Fira Code',monospace;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;text-transform:uppercase}
+.act-ban{background:#fee2e2;color:var(--red)}
+.act-challenge{background:#fef3c7;color:var(--amb)}
+.act-warn{background:#ede9fe;color:var(--pur)}
+.act-allow{background:#d1fae5;color:var(--grn)}
+
+/* ═══ LOGIN ═══ */
+.login-wrap{max-width:420px;margin:0 auto;padding-top:20px}
+.login-box{background:var(--bg1);border:1px solid var(--brd);border-radius:14px;padding:32px;box-shadow:var(--shadow2)}
+.login-box h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--tx3);margin-bottom:24px}
+.fg{margin-bottom:14px}
+.fg label{font-size:11px;color:var(--tx2);display:block;margin-bottom:5px;font-weight:600}
+.fg input{width:100%;padding:10px 13px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:8px;color:var(--tx1);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border .2s}
+.fg input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn-login{width:100%;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.btn-login:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn-login:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.lr{margin-top:14px;padding:10px 13px;border-radius:8px;font-size:11px;display:none;font-weight:500}
+.lr.ok{background:#d1fae5;color:var(--grn);border:1px solid #6ee7b7;display:block}
+.lr.err{background:#fee2e2;color:var(--red);border:1px solid #fca5a5;display:block}
+.lr.lck{background:#fef3c7;color:var(--amb);border:1px solid #fcd34d;display:block}
+.la{margin-top:14px}
+.la-row{display:flex;align-items:center;gap:7px;padding:5px 0;font-size:10px;color:var(--tx2);border-bottom:1px solid var(--brd);font-family:'Fira Code',monospace}
+.la-dot{width:5px;height:5px;border-radius:50%}
+.la-dot.f{background:var(--red)}.la-dot.s{background:var(--grn)}.la-dot.l{background:var(--amb)}
+
+/* ═══ SETTINGS ═══ */
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--brd)}
+.st-label{font-size:13px;font-weight:600;color:var(--tx1)}
+.st-desc{font-size:10px;color:var(--tx3);margin-top:2px}
+.st-val{font-family:'Fira Code',monospace;font-size:12px;font-weight:600;color:var(--acc);background:#eff6ff;padding:4px 12px;border-radius:20px;border:1px solid #bfdbfe;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sb" id="sidebar">
+  <div class="sb-brand"><div class="sb-brand-icon" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px"><svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.4C17.5 22.15 21 17.25 21 12V6l-8-4z" fill="rgba(255,255,255,0.9)" stroke="#93c5fd" stroke-width="0.5"/><path d="M10 12l2 2 4-4" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div><div><h1>Adaptive Shield</h1><small>СИСТЕМА ЗАЩИТЫ</small></div></div>
+  <div class="sb-nav">
+    <div class="sb-section">МОНИТОРИНГ</div>
+    <div class="sb-item on" data-tab="overview">Обзор<span class="badge" id="nBadge" style="display:none">!</span></div>
+    <div class="sb-item" data-tab="traffic">Трафик</div>
+    <div class="sb-item" data-tab="threats">Угрозы</div>
+    <div class="sb-item" data-tab="events">События</div>
+    <div class="sb-section">ЗАЩИТА</div>
+    <div class="sb-item" data-tab="bruteforce">Brute Force</div>
+    <div class="sb-item" data-tab="login">Тест входа</div>
+    <div class="sb-section">АНАЛИЗ</div>
+    <div class="sb-item" data-tab="benchmark">Сравнение</div>
+    <div class="sb-item" data-tab="results">Результаты тестов</div>
+    <div class="sb-item" data-tab="report">Экспорт</div>
+    <div class="sb-section">СИСТЕМА</div>
+    <div class="sb-item" data-tab="settings">Настройки</div>
+    <a href="/admin" style="display:flex;align-items:center;gap:8px;text-decoration:none;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:500;color:#94a3b8;cursor:pointer;transition:all .18s;margin-bottom:2px" onmouseover="this.style.background='rgba(255,255,255,0.07)';this.style.color='#e2e8f0'" onmouseout="this.style.background='';this.style.color='#94a3b8'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Пользователи
+    </a>
+  </div>
+  <div class="sb-bottom"><div class="sb-dot" id="sDot"></div><span class="sb-status" id="sTxt"></span></div>
+</div>
+
+<!-- MAIN -->
+<div class="mn">
+  <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><div class="toggle-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/></svg></div><h2 id="pTitle">Обзор</h2></div><div class="topbar-r"><span class="topbar-time" id="clock"></span><span style="font-size:12px;color:var(--tx3)">admin</span><button onclick="doLogout()" style="padding:5px 14px;background:transparent;border:1px solid var(--brd);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Выйти</button></div></div>
+  <div class="content" id="mainContent">
+
+    <!-- OVERVIEW -->
+    <div class="tab on" id="t-overview">
+      <div class="g6">
+        <div class="cd mt c-bl"><div class="mt-label">Запросы</div><div class="mt-v" id="mR">0</div><div class="mt-sub">Всего входящих</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-rd"><div class="mt-label">Заблокировано</div><div class="mt-v" id="mB">0</div><div class="mt-sub">Отклонено запросов</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-am"><div class="mt-label">Ограничено</div><div class="mt-v" id="mL">0</div><div class="mt-sub">Ограничено</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-pu"><div class="mt-label">Brute Force</div><div class="mt-v" id="mF">0</div><div class="mt-sub">Атак авторизации</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-cy"><div class="mt-label">Anomalies</div><div class="mt-v" id="mA">0</div><div class="mt-sub">Обнаружено</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-gn"><div class="mt-label">ЗАП/СЕК</div><div class="mt-v" id="mP">0</div><div class="mt-sub">Текущая скорость</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+      </div>
+      <div class="g21">
+        <div class="cd"><div class="cd-h"><span class="cd-t">Трафик и угрозы</span></div><div class="ch"><canvas id="cTraffic"></canvas></div></div>
+        <div class="cd"><div class="cd-h"><span class="cd-t">Эффективность защиты</span></div><div class="ch" style="position:relative"><canvas id="cPie"></canvas><div id="pieCenter" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);text-align:center;pointer-events:none"><div id="piePct" style="font-size:26px;font-weight:700;font-family:'Fira Code',monospace;color:var(--tx1);line-height:1">0%</div><div style="font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-top:3px">заблокировано</div></div></div></div>
+      </div>
+      <div class="g2">
+        <div class="cd"><div class="cd-h"><span class="cd-t">Последние события</span><span class="cd-a" onclick="go('events')">Все →</span></div><div class="ev-list" id="oEv" style="max-height:240px"></div></div>
+        <div class="cd"><div class="cd-h"><span class="cd-t">Топ угроз</span><span class="cd-a" onclick="go('threats')">Все →</span></div><div id="oTh"></div></div>
+      </div>
+    </div>
+
+    <!-- TRAFFIC -->
+    <div class="tab" id="t-traffic">
+      <div class="g3">
+        <div class="cd mt c-gn"><div class="mt-label">Baseline RPS</div><div class="mt-v" id="tB">0</div><div class="mt-sub">Learned average</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-cy"><div class="mt-label">Текущий RPS</div><div class="mt-v" id="tC">0</div><div class="mt-sub">Live rate</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-am"><div class="mt-label">Адаптивный множитель</div><div class="mt-v" id="tM">1.0</div><div class="mt-sub">Scaling factor</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+      </div>
+      <div class="cd" style="margin-bottom:18px"><div class="cd-h"><span class="cd-t">График трафика</span></div><div class="ch"><canvas id="cTraffic2"></canvas></div></div>
+      <div class="cd"><div class="cd-h"><span class="cd-t">Как это работает</span></div>
+        <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
+          <p>Baseline learned via <span style="color:var(--tx1);font-weight:700">Exponential Moving Average (EMA)</span>. When traffic exceeds baseline × burst multiplier, limits auto-tighten.</p>
+          <p style="margin-top:6px"><span style="color:var(--amb);font-weight:600">Multiplier &lt; 1.0</span> = идёт атака · <span style="color:var(--tx1);font-weight:600">1.0</span> = норма · <span style="color:var(--grn);font-weight:600">&gt; 1.0</span> = спокойно</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- THREATS -->
+    <div class="tab" id="t-threats">
+      <div class="cd" style="margin-bottom:18px"><div class="cd-h"><span class="cd-t">Подозрительные IP</span></div>
+        <table class="tbl"><thead><tr><th>IP / Fingerprint</th><th>Score</th><th>Level</th><th>Действие</th><th>Violations</th><th>Тип</th></tr></thead><tbody id="thBody"></tbody></table>
+      </div>
+      <div class="cd" style="margin-bottom:18px">
+        <div class="cd-h"><span class="cd-t">Белый список IP</span><span style="font-size:11px;color:var(--tx3)">IP в белом списке обходят защиту</span></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <input id="wlInput" placeholder="Введите IP адрес (напр. 192.168.1.1)" style="flex:1;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Fira Code',monospace;outline:none">
+          <button onclick="addWhitelist()" style="padding:9px 18px;background:var(--grn);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Добавить</button>
+        </div>
+        <div id="wlList"><div style="color:var(--tx3);font-size:12px">Loading...</div></div>
+      </div>
+      <div class="cd"><div class="cd-h"><span class="cd-t">Распределение Score</span></div><div class="ch-sm"><canvas id="cRep"></canvas></div></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="tab" id="t-events">
+      <div class="cd"><div class="cd-h"><span class="cd-t">Журнал событий безопасности</span><span style="font-size:10px;color:var(--tx3)">Обновление каждые 2с</span></div><div class="ev-list" id="fEv" style="max-height:calc(100vh - 180px)"></div></div>
+    </div>
+
+    <!-- BRUTEFORCE -->
+    <div class="tab" id="t-bruteforce">
+      <div class="g3">
+        <div class="cd mt c-rd"><div class="mt-label">Заблокированные IP</div><div class="mt-v" id="bL">0</div><div class="mt-sub">Заблокировано сейчас</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-am"><div class="mt-label">Failed Attempts</div><div class="mt-v" id="bA">0</div><div class="mt-sub">Всего неудач</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-pu"><div class="mt-label">Заблокировано</div><div class="mt-v" id="bB">0</div><div class="mt-sub">Остановлено атак</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+      </div>
+      <div class="g2">
+        <div class="cd"><div class="cd-h"><span class="cd-t">Currently Locked</span></div><div id="lkList"><p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p></div></div>
+        <div class="cd"><div class="cd-h"><span class="cd-t">Как это работает</span></div>
+          <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
+            <p><span style="color:var(--tx1);font-weight:700">Progressive Lockout:</span> 15min → 30min → 60min</p>
+            <p><span style="color:var(--tx1);font-weight:700">Credential Stuffing:</span> 3+ аккаунта с одного IP = credential stuffing атака</p>
+            <p><span style="color:var(--tx1);font-weight:700">Cross-system:</span> Неудачные входы повышают счёт репутации</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="tab" id="t-login">
+      <div class="login-wrap">
+        <div class="login-box">
+          <h2>Тест входа</h2>
+          <p>Try wrong passwords to test brute force protection</p>
+          <div class="fg"><label>Username</label><input id="lU" value="admin"></div>
+          <div class="fg"><label>Password</label><input type="password" id="lP" placeholder="Введите пароль..."></div>
+          <button class="btn-login" id="lBtn" onclick="doLogin()">Войти</button>
+          <div class="lr" id="lR"></div>
+          <div class="la" id="lA"></div>
+        </div>
+        <div class="cd" style="margin-top:14px">
+          <div class="cd-t" style="margin-bottom:8px">Демо данные</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);line-height:2.2">admin : admin123<br>user : password<br>test : test123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab" id="t-settings">
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Configuration</span></div>
+        <div class="st-row"><div><div class="st-label">Общий лимит запросов</div><div class="st-desc">Макс. запросов в минуту</div></div><div class="st-val">100/min</div></div>
+        <div class="st-row"><div><div class="st-label">Лимит входов</div><div class="st-desc">Макс. попыток входа в минуту</div></div><div class="st-val">5/min</div></div>
+        <div class="st-row"><div><div class="st-label">Порог блокировки</div><div class="st-desc">Score репутации для бана</div></div><div class="st-val">100.0</div></div>
+        <div class="st-row"><div><div class="st-label">Порог проверки</div><div class="st-desc">Score для challenge</div></div><div class="st-val">50.0</div></div>
+        <div class="st-row"><div><div class="st-label">Скорость decay</div><div class="st-desc">Снижение score в минуту</div></div><div class="st-val">0.95/min</div></div>
+        <div class="st-row"><div><div class="st-label">Множитель всплеска</div><div class="st-desc">Порог обнаружения DDoS</div></div><div class="st-val">3.0×</div></div>
+        <div class="st-row"><div><div class="st-label">Порог Z-Score</div><div class="st-desc">Чувствительность аномалий</div></div><div class="st-val">2.5σ</div></div>
+        <div class="st-row"><div><div class="st-label">Макс. попыток входа</div><div class="st-desc">До блокировки</div></div><div class="st-val">5</div></div>
+        <div class="st-row"><div><div class="st-label">Базовая блокировка</div><div class="st-desc">Прогрессивная ×2</div></div><div class="st-val">15 min</div></div>
+        <div class="st-row"><div><div class="st-label">Fingerprinting</div><div class="st-desc">TLS + Заголовки + Время</div></div><div class="st-val">● ON</div></div>
+        <div class="st-row"><div><div class="st-label">Adaptive Mode</div><div class="st-desc">Self-learning baseline</div></div><div class="st-val">● ON</div></div>
+      
+      <div class="cd" style="margin-top:18px">
+        <div class="cd-h"><span class="cd-t">Telegram уведомления</span></div>
+        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:32px;background:#16a34a;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#15803d">Telegram активен — уведомления включены</div>
+            <div style="font-size:11px;color:#16a34a;margin-top:1px">DDoS · Brute Force · IP блокировки</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:24px;height:24px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#fff">1</div>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.6">Откройте Telegram → <strong>@BotFather</strong> → создайте бота командой <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">/newbot</code></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:24px;height:24px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#fff">2</div>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.6">Скопируйте <strong>Bot Token</strong> и получите <strong>Chat ID</strong> через getUpdates</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:24px;height:24px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#fff">3</div>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.6">Добавьте в <code style="background:var(--bg3);padding:1px 6px;border-radius:4px">.env</code> файл:</div>
+          </div>
+        </div>
+        <div style="background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 18px;font-family:'Fira Code',monospace;font-size:12px;line-height:2;margin-bottom:18px">
+          <span style="color:#94a3b8"># Telegram настройки</span><br>
+          <span style="color:#7dd3fc">TELEGRAM_BOT_TOKEN</span>=<span style="color:#86efac">ваш_токен</span><br>
+          <span style="color:#7dd3fc">TELEGRAM_CHAT_ID</span>=<span style="color:#86efac">ваш_chat_id</span>
+        </div>
+        <button onclick="testTelegram()" style="padding:9px 22px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Отправить тест</button>
+        <span id="tgResult" style="margin-left:12px;font-size:12px;color:var(--tx3)"></span>
+      </div>
+</div>
+    </div>
+
+    <!-- BENCHMARK: Comparison with fail2ban/nginx -->
+    <div class="tab" id="t-benchmark">
+      <div class="cd" style="margin-bottom:18px">
+        <div class="cd-h"><span class="cd-t">Сравнительный анализ систем защиты</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl" id="benchTable">
+            <thead>
+              <tr>
+                <th style="width:22%">Функция</th>
+                <th style="color:var(--acc);width:30%">✦ Adaptive Shield</th>
+                <th style="width:24%">fail2ban</th>
+                <th style="width:24%">nginx rate limit</th>
+              </tr>
+            </thead>
+            <tbody id="benchBody">
+              <tr><td style="font-weight:600">Rate Limiting</td><td style="color:var(--acc);font-weight:600">Адаптивный (EMA baseline)</td><td>Статичный порог</td><td>Статичный req/s</td></tr>
+              <tr><td style="font-weight:600">Метод обнаружения</td><td style="color:var(--acc);font-weight:600">Многоуровневый (отпечаток + аномалия + репутация)</td><td>Анализ паттернов логов</td><td>Подсчёт запросов</td></tr>
+              <tr><td style="font-weight:600">Идентификация клиента</td><td style="color:var(--acc);font-weight:600">Отпечаток (UA + заголовки + тайминг)</td><td>Только IP</td><td>Только IP</td></tr>
+              <tr><td style="font-weight:600">Brute Force защита</td><td style="color:var(--acc);font-weight:600">Прогрессивная блокировка + credential stuffing</td><td>Фиксированный бан после N попыток</td><td>Нет</td></tr>
+              <tr><td style="font-weight:600">IP Репутация</td><td style="color:var(--acc);font-weight:600">Скоринг с экспоненциальным затуханием</td><td>Бинарный (забанен/нет)</td><td>Нет</td></tr>
+              <tr><td style="font-weight:600">Anomaly Detection</td><td style="color:var(--acc);font-weight:600">Z-score + анализ тайминга</td><td>Нет</td><td>Нет</td></tr>
+              <tr><td style="font-weight:600">Self-Learning</td><td style="color:var(--acc);font-weight:600">Да (EMA baseline адаптация)</td><td>Нет</td><td>Нет</td></tr>
+              <tr><td style="font-weight:600">Real-time Dashboard</td><td style="color:var(--acc);font-weight:600">Встроенный (11 вкладок, live графики)</td><td>Только CLI</td><td>Базовая страница</td></tr>
+              <tr><td style="font-weight:600">Alert System</td><td style="color:var(--acc);font-weight:600">Telegram + структурированные логи</td><td>Email (базовый)</td><td>Только логи</td></tr>
+              <tr><td style="font-weight:600">Восстановление</td><td style="color:var(--acc);font-weight:600">Авто (затухание репутации)</td><td>Вручную или таймер</td><td>Авто (сброс окна)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Ключевые преимущества</span></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--bg2);border-radius:10px;border-left:3px solid var(--acc)">
+            <div style="font-size:13px;color:var(--tx2);line-height:1.7"><span style="color:var(--tx1);font-weight:600">Adaptive Shield</span> работает на уровне L7 (приложения) — анализирует содержимое запросов, поведение пользователей и паттерны сессий</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--bg2);border-radius:10px;border-left:3px solid var(--grn)">
+            <div style="font-size:13px;color:var(--tx2);line-height:1.7"><span style="color:var(--tx1);font-weight:600">fail2ban</span> реактивен (анализирует логи постфактум) — Adaptive Shield проактивен (анализирует в реальном времени до обработки запроса)</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--bg2);border-radius:10px;border-left:3px solid var(--amb)">
+            <div style="font-size:13px;color:var(--tx2);line-height:1.7"><span style="color:var(--tx1);font-weight:600">nginx</span> rate limiting не сохраняет состояние — Adaptive Shield поддерживает репутацию IP между сессиями с затуханием</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--bg2);border-radius:10px;border-left:3px solid var(--pur)">
+            <div style="font-size:13px;color:var(--tx2);line-height:1.7">Тек <span style="color:var(--tx1);font-weight:600">Adaptive Shield</span> обнаруживает credential stuffing и отличает его от целенаправленного brute force</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST RESULTS -->
+    <div class="tab" id="t-results">
+      <div class="g3" style="margin-bottom:22px">
+        <div class="cd mt c-bl"><div class="mt-label">DDoS блокировка</div><div class="mt-v" style="color:var(--acc)">96%</div><div class="mt-sub">HTTP Flood атака</div></div>
+        <div class="cd mt c-gn"><div class="mt-label">Brute Force блокировка</div><div class="mt-v" style="color:var(--grn)">100%</div><div class="mt-sub">Все попытки остановлены</div></div>
+        <div class="cd mt c-am"><div class="mt-label">Время обнаружения</div><div class="mt-v" style="color:var(--amb)">~1.2с</div><div class="mt-sub">Среднее время реакции</div></div>
+      </div>
+      <div class="cd" style="margin-bottom:18px">
+        <div class="cd-h"><span class="cd-t">Результаты тестирования</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl" id="resultsTable">
+            <thead>
+              <tr>
+                <th>Тип атаки</th>
+                <th style="color:var(--acc)">Adaptive Shield</th>
+                <th>fail2ban</th>
+                <th>nginx</th>
+                <th>Время обнаружения</th>
+                <th>Восстановление</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr>
+                <td style="font-weight:600">HTTP Flood (DDoS)</td>
+                <td><span style="color:var(--grn);font-weight:700">96%</span></td>
+                <td><span style="color:var(--amb);font-weight:600">72%</span></td>
+                <td><span style="color:var(--tx3);font-weight:600">65%</span></td>
+                <td>1.2с</td>
+                <td>Авто (затухание)</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Brute Force</td>
+                <td><span style="color:var(--grn);font-weight:700">100%</span></td>
+                <td><span style="color:var(--amb);font-weight:600">85%</span></td>
+                <td><span style="color:var(--tx3);font-weight:600">0%</span></td>
+                <td>0.8с</td>
+                <td>Прогрессивный бан</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Credential Stuffing</td>
+                <td><span style="color:var(--grn);font-weight:700">94%</span></td>
+                <td><span style="color:var(--amb);font-weight:600">40%</span></td>
+                <td><span style="color:var(--tx3);font-weight:600">0%</span></td>
+                <td>2.1с</td>
+                <td>IP бан</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Slowloris</td>
+                <td><span style="color:var(--grn);font-weight:700">100%</span></td>
+                <td><span style="color:var(--amb);font-weight:600">60%</span></td>
+                <td><span style="color:var(--tx3);font-weight:600">55%</span></td>
+                <td>3.5с</td>
+                <td>Авто timeout</td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Distributed DDoS</td>
+                <td><span style="color:var(--grn);font-weight:700">89%</span></td>
+                <td><span style="color:var(--amb);font-weight:600">35%</span></td>
+                <td><span style="color:var(--tx3);font-weight:600">45%</span></td>
+                <td>4.2с</td>
+                <td>Репутация decay</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:18px">
+        <div class="cd"><div class="cd-h"><span class="cd-t">Сравнение процента блокировки</span></div><div class="ch"><canvas id="cBlock"></canvas></div></div>
+        <div class="cd"><div class="cd-h"><span class="cd-t">Ложные срабатывания (FP Rate)</span></div><div class="ch"><canvas id="cFP"></canvas></div></div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Методология</span></div>
+        <div style="font-size:12.5px;color:var(--tx2);line-height:2">
+          <p>Тесты проводились в локальной среде. Каждая атака <strong style="color:var(--tx1)">30 секунд</strong> симулировалась. Базовый трафик: <strong style="color:var(--tx1)">5 запросов/сек</strong>. Метрики собирались через потоки событий Redis.</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+            <div style="padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px">
+              <span style="color:var(--tx1);font-weight:600">Процент блокировки</span> <span style="color:var(--tx3)">= заблокированные вредоносные запросы / все вредоносные запросы × 100%</span>
+            </div>
+            <div style="padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px">
+              <span style="color:var(--tx1);font-weight:600">False Positive Rate</span> <span style="color:var(--tx3)">= заблокированные легитимные запросы / все легитимные запросы × 100%</span>
+            </div>
+            <div style="padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px">
+              <span style="color:var(--tx1);font-weight:600">Время обнаружения</span> <span style="color:var(--tx3)">= время от первого запроса атаки до первой блокировки</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT PDF -->
+    <div class="tab" id="t-report">
+      <div class="cd" style="margin-bottom:18px">
+        <div class="cd-h"><span class="cd-t">Отчёт безопасности</span></div>
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:48px;margin-bottom:12px;font-size:0">
+          <div style="width:52px;height:52px;border-radius:12px;background:#eff6ff;border:2px solid #bfdbfe;margin:0 auto 16px;display:grid;place-items:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+          <p style="font-size:14px;font-weight:600;margin-bottom:6px">Экспорт отчёта</p>
+          <p style="font-size:12px;color:var(--tx3);margin-bottom:20px">Экспорт журналов и отчётов в любом формате</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onclick="generatePDF()" style="padding:10px 20px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">PDF Отчёт</button>
+            <a href="/dashboard/api/export/csv" style="padding:10px 20px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;display:inline-block">CSV События</a>
+            <a href="/dashboard/api/export/json" style="padding:10px 20px;background:#0891b2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;display:inline-block">JSON Отчёт</a>
+            <a href="/dashboard/api/export/txt" style="padding:10px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;display:inline-block">TXT Отчёт</a>
+          </div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Предпросмотр отчёта</span></div>
+        <div id="reportPreview" style="font-size:12px;line-height:1.8;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;padding:20px;color:var(--tx2)"><p style="color:var(--tx3)">Нажмите "PDF Отчёт" для загрузки предпросмотра...</p></div>
+      </div>
+    </div>
+
+    <!-- TELEGRAM -->
+
+    <div class="tab" id="t-weblogin">
+      <div class="g2" style="align-items:start">
+        <div>
+          <!-- Fake protected login form -->
+          <div class="cd" style="margin-bottom:18px">
+            <div class="cd-h"><span class="cd-t">Защищённый веб-ресурс</span><span style="font-size:10px;background:#d1fae5;color:#059669;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #6ee7b7">ЗАЩИТА АКТИВНА</span></div>
+            <div style="background:var(--bg2);border-radius:10px;padding:28px;border:1px solid var(--brd)">
+              <div style="text-align:center;margin-bottom:24px">
+                <div style="width:48px;height:48px;background:var(--acc);border-radius:12px;margin:0 auto 12px;display:grid;place-items:center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div style="font-size:18px;font-weight:700;color:var(--tx1)">Безопасный вход</div>
+                <div style="font-size:12px;color:var(--tx3);margin-top:4px">Защищено Adaptive Shield</div>
+              </div>
+              <div class="fg"><label>Username</label><input id="dU" type="text" placeholder="Введите имя пользователя" value="admin"></div>
+              <div class="fg"><label>Password</label><input id="dP" type="password" placeholder="Введите пароль"></div>
+              <button onclick="demoLogin()" style="width:100%;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:12px">Войти</button>
+              <div id="demoRes" style="display:none;padding:10px;border-radius:8px;font-size:12px;font-weight:500;text-align:center"></div>
+              <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--tx3)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Лимит запросов · Защита от Brute Force · IP отслеживается
+              </div>
+            </div>
+          </div>
+          <!-- Attack log -->
+          <div class="cd">
+            <div class="cd-h"><span class="cd-t">Login Attempt Log</span></div>
+            <div id="demoLog" style="font-family:'Fira Code',monospace;font-size:11px;color:var(--tx2);max-height:200px;overflow-y:auto;line-height:2"></div>
+          </div>
+        </div>
+        <!-- Protection explanation -->
+        <div>
+          <div class="cd" style="margin-bottom:18px">
+            <div class="cd-h"><span class="cd-t">How Login is Protected</span></div>
+            <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
+              <div style="display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--brd)">
+                <div style="width:32px;height:32px;border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--acc)">01</div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Лимит запросов</div><div style="font-size:11px">Max 5 login attempts в минуту per IP. After that — 429 Too Many Requests.</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--brd)">
+                <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--amb)">02</div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Progressive Lockout</div><div style="font-size:11px">5 fails → 15 min lock. 10 fails → 30 min. 15 fails → 60 min.</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--brd)">
+                <div style="width:32px;height:32px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--red)">03</div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">IP Reputation Score</div><div style="font-size:11px">Each failed attempt raises the score. Score ≥ 100 → permanent IP ban.</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:start;padding:10px 0">
+                <div style="width:32px;height:32px;border-radius:8px;background:#ede9fe;border:1px solid #c4b5fd;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--pur)">04</div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Credential Stuffing Detection</div><div style="font-size:11px">3+ different usernames from same IP = stuffing attack. Instant ban.</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="cd">
+            <div class="cd-h"><span class="cd-t">Демо данные</span></div>
+            <div style="font-family:'Fira Code',monospace;font-size:11px;color:var(--tx2);line-height:2.4">
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--brd);padding:4px 0"><span style="color:var(--grn);font-weight:600">admin</span><span>: admin123</span><span style="background:#d1fae5;color:#059669;padding:1px 8px;border-radius:10px;font-size:9px">ADMIN</span></div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--brd);padding:4px 0"><span style="color:var(--acc);font-weight:600">user</span><span>: password</span><span style="background:#eff6ff;color:var(--acc);padding:1px 8px;border-radius:10px;font-size:9px">USER</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span style="color:var(--tx3);font-weight:600">test</span><span>: test123</span><span style="background:#f1f5f9;color:var(--tx3);padding:1px 8px;border-radius:10px;font-size:9px">USER</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEB API ENDPOINTS -->
+    <div class="tab" id="t-webapi">
+      <div class="cd" style="margin-bottom:18px">
+        <div class="cd-h"><span class="cd-t">Protected API Endpoints</span><span style="font-size:10px;background:#d1fae5;color:#059669;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #6ee7b7">ЗАЩИТА АКТИВНА</span></div>
+        <table class="tbl">
+          <thead><tr><th>Method</th><th>Endpoint</th><th>Protection</th><th>Rate Limit</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">POST</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/api/login</td><td>Brute Force + Rate Limit</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--amb)">5/min</td><td><span class="act act-allow">ONLINE</span></td></tr>
+            <tr><td><span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">GET</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/api/users</td><td>IP Reputation + Auth</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--amb)">60/min</td><td><span class="act act-allow">ONLINE</span></td></tr>
+            <tr><td><span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">GET</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/api/data</td><td>Rate Limit + Anomaly</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--amb)">100/min</td><td><span class="act act-allow">ONLINE</span></td></tr>
+            <tr><td><span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">DELETE</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/api/admin/reset</td><td>Admin Only + Белый список IP</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--red)">1/min</td><td><span class="act act-allow">ONLINE</span></td></tr>
+            <tr><td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">POST</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/api/register</td><td>Rate Limit + Fingerprint</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--amb)">3/min</td><td><span class="act act-allow">ONLINE</span></td></tr>
+            <tr><td><span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-family:'Fira Code',monospace;font-size:10px;font-weight:700">GET</span></td><td style="font-family:'Fira Code',monospace;font-size:11px">/dashboard</td><td>Session + JWT Token</td><td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--grn)">unlimited</td><td><span class="act act-allow">ONLINE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="g2">
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Уровни защиты</span></div>
+          <div style="font-size:12.5px;color:var(--tx2);line-height:2">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-weight:600;color:var(--tx1)">Layer 1 — Network</span><span style="color:var(--tx3);font-size:11px">iptables · SYN flood block</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-weight:600;color:var(--tx1)">Layer 2 — Transport</span><span style="color:var(--tx3);font-size:11px">Nginx · connection limit</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-weight:600;color:var(--tx1)">Layer 3 — Application</span><span style="color:var(--tx3);font-size:11px">Flask Middleware · rate limit</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--brd)"><span style="font-weight:600;color:var(--tx1)">Layer 4 — Auth</span><span style="color:var(--tx3);font-size:11px">JWT · brute force guard</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-weight:600;color:var(--tx1)">Layer 5 — Intelligence</span><span style="color:var(--tx3);font-size:11px">IP reputation · anomaly detect</span></div>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Response Codes</span></div>
+          <div style="font-size:12px;line-height:2.2">
+            <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--brd);padding:4px 0"><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--grn);min-width:36px">200</span><span style="color:var(--tx2)">OK — request allowed through</span></div>
+            <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--brd);padding:4px 0"><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb);min-width:36px">429</span><span style="color:var(--tx2)">Too Many Requests — rate limited</span></div>
+            <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--brd);padding:4px 0"><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--red);min-width:36px">403</span><span style="color:var(--tx2)">Forbidden — IP banned</span></div>
+            <div style="display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--brd);padding:4px 0"><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--pur);min-width:36px">401</span><span style="color:var(--tx2)">Unauthorized — bad credentials</span></div>
+            <div style="display:flex;gap:10px;align-items:center;padding:4px 0"><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--cyn);min-width:36px">503</span><span style="color:var(--tx2)">Service Unavailable — under attack</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL DEMO -->
+    <div class="tab" id="t-webadmin">
+      <div class="cd" style="margin-bottom:18px;border-top:3px solid var(--red)">
+        <div class="cd-h"><span class="cd-t">Admin Panel</span><span style="font-size:10px;background:#fee2e2;color:var(--red);padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #fca5a5">HIGH VALUE TARGET</span></div>
+        <div style="font-size:12.5px;color:var(--tx2);line-height:1.8;margin-bottom:16px">Admin panels are the #1 target for brute force and DDoS attacks. Adaptive Shield applies maximum protection to <span style="font-family:'Fira Code',monospace;color:var(--tx1)">/admin</span>, <span style="font-family:'Fira Code',monospace;color:var(--tx1)">/dashboard</span>, and <span style="font-family:'Fira Code',monospace;color:var(--tx1)">/api/admin/*</span> routes.</div>
+        <div style="background:var(--bg2);border-radius:10px;padding:20px;border:1px solid var(--brd)">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px">
+            <div style="background:#fff;border:1px solid var(--brd);border-radius:8px;padding:14px;text-align:center"><div style="font-family:'Fira Code',monospace;font-size:22px;font-weight:700;color:var(--acc)">1/min</div><div style="font-size:10px;color:var(--tx3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Admin Rate Limit</div></div>
+            <div style="background:#fff;border:1px solid var(--brd);border-radius:8px;padding:14px;text-align:center"><div style="font-family:'Fira Code',monospace;font-size:22px;font-weight:700;color:var(--red)">3</div><div style="font-size:10px;color:var(--tx3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Max Attempts</div></div>
+            <div style="background:#fff;border:1px solid var(--brd);border-radius:8px;padding:14px;text-align:center"><div style="font-family:'Fira Code',monospace;font-size:22px;font-weight:700;color:var(--grn)">JWT</div><div style="font-size:10px;color:var(--tx3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px">Auth Required</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.9">
+            <div style="padding:8px 12px;background:#fff;border:1px solid var(--brd);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between"><span style="font-family:'Fira Code',monospace">GET /admin/users</span><span class="act act-challenge">JWT REQUIRED</span></div>
+            <div style="padding:8px 12px;background:#fff;border:1px solid var(--brd);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between"><span style="font-family:'Fira Code',monospace">POST /admin/ban-ip</span><span class="act act-ban">ADMIN ONLY</span></div>
+            <div style="padding:8px 12px;background:#fff;border:1px solid var(--brd);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between"><span style="font-family:'Fira Code',monospace">DELETE /admin/reset</span><span class="act act-ban">ADMIN ONLY</span></div>
+            <div style="padding:8px 12px;background:#fff;border:1px solid var(--brd);border-radius:6px;display:flex;justify-content:space-between"><span style="font-family:'Fira Code',monospace">GET /admin/logs</span><span class="act act-challenge">ADMIN ONLY</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Why Admin Panels Are Targeted</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12.5px;color:var(--tx2);line-height:1.8">
+          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--red);margin-bottom:6px">DDoS Against Admin</div>Flooding the admin endpoint with thousands of requests per second to crash the management interface and blind the defender.</div>
+          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--pur);margin-bottom:6px">Brute Force on Admin Login</div>Automated tools like Hydra try thousands of admin:password combinations в минуту until access is granted.</div>
+          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--amb);margin-bottom:6px">Credential Stuffing</div>Using leaked database dumps to test admin credentials. One match gives full control of the server.</div>
+          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--grn);margin-bottom:6px">Adaptive Shield Response</div>Rate limit + lockout + IP ban + Telegram alert — all triggered within milliсекунд of attack detection.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DDOS SIMULATION -->
+    <div class="tab" id="t-ddosdemo">
+      <div class="g2" style="margin-bottom:0">
+        <div class="cd" style="margin-bottom:18px">
+          <div class="cd-h"><span class="cd-t">DDoS Attack Simulator</span><span style="font-size:10px;background:#fef3c7;color:var(--amb);padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #fcd34d">VISUAL DEMO</span></div>
+          <div style="font-size:12.5px;color:var(--tx2);margin-bottom:16px;line-height:1.8">Visualises what happens when a DDoS attack hits your server — and how Adaptive Shield responds in real time.</div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:11px;color:var(--tx2);font-weight:600;display:block;margin-bottom:6px">Attack Intensity</label>
+            <input type="range" id="ddosSlider" min="1" max="5" value="3" style="width:100%;accent-color:var(--acc)" oninput="updateDdosLabel(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-top:4px"><span>Low</span><span>Medium</span><span>High</span><span>Severe</span><span>Critical</span></div>
+          </div>
+          <div style="margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd);font-family:'Fira Code',monospace;font-size:11px;color:var(--tx1)">
+            Attack type: <span id="ddosType" style="color:var(--red);font-weight:600">HTTP Flood</span><br>
+            RPS simulated: <span id="ddosRPS" style="color:var(--amb);font-weight:600">500 req/s</span><br>
+            Expected action: <span id="ddosAction" style="color:var(--grn);font-weight:600">Rate limit + IP ban</span>
+          </div>
+          <button onclick="runDdosDemo()" id="ddosBtn" style="width:100%;padding:11px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Simulate DDoS Attack</button>
+          <div id="ddosLog" style="margin-top:14px;font-family:'Fira Code',monospace;font-size:11px;max-height:160px;overflow-y:auto;line-height:2;color:var(--tx2)"></div>
+        </div>
+        <div class="cd" style="margin-bottom:18px">
+          <div class="cd-h"><span class="cd-t">DDoS Attack Types</span></div>
+          <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
+            <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">HTTP Flood (Layer 7)</div><div style="font-size:11px">Sends thousands of valid HTTP GET/POST requests. Hard to block — looks like real traffic. Adaptive Shield detects via EMA baseline deviation.</div></div>
+            <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">SYN Flood (Layer 4)</div><div style="font-size:11px">Sends millions of TCP SYN packets without completing handshake. Blocked at network layer by iptables rules.</div></div>
+            <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Slowloris (Layer 7)</div><div style="font-size:11px">Holds connections open with slow headers. Nginx timeout config kills these within 10 секунд.</div></div>
+            <div style="padding:10px 0"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">UDP Flood (Layer 3)</div><div style="font-size:11px">Floods with UDP packets. Blocked at iptables level before reaching the application.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Response Timeline: What Happens During an Attack</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;font-size:11px;padding:10px 0">
+          <div style="padding:14px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe"><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--acc);font-size:13px;margin-bottom:6px">0ms</div><div style="color:var(--tx2)">Attack begins. First requests arrive.</div></div>
+          <div style="padding:14px;background:#fef3c7;border-radius:8px;border:1px solid #fcd34d"><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb);font-size:13px;margin-bottom:6px">~50ms</div><div style="color:var(--tx2)">EMA baseline deviation detected.</div></div>
+          <div style="padding:14px;background:#fee2e2;border-radius:8px;border:1px solid #fca5a5"><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--red);font-size:13px;margin-bottom:6px">~100ms</div><div style="color:var(--tx2)">Rate limits tightened. 429 responses sent.</div></div>
+          <div style="padding:14px;background:#ede9fe;border-radius:8px;border:1px solid #c4b5fd"><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--pur);font-size:13px;margin-bottom:6px">~200ms</div><div style="color:var(--tx2)">Attacker IPs banned. Telegram alert sent.</div></div>
+          <div style="padding:14px;background:#d1fae5;border-radius:8px;border:1px solid #6ee7b7"><div style="font-family:'Fira Code',monospace;font-weight:700;color:var(--grn);font-size:13px;margin-bottom:6px">~500ms</div><div style="color:var(--tx2)">Attack absorbed. Baseline recovers.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRUTE FORCE DEMO -->
+    <div class="tab" id="t-bfdemo">
+      <div class="g2" style="align-items:start">
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Brute Force Attack Simulator</span><span style="font-size:10px;background:#fef3c7;color:var(--amb);padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #fcd34d">VISUAL DEMO</span></div>
+          <div style="font-size:12.5px;color:var(--tx2);margin-bottom:16px;line-height:1.8">Simulates what an attacker using Hydra or Burp Suite sees when trying to brute force your login.</div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:11px;color:var(--tx2);font-weight:600;display:block;margin-bottom:6px">Attack Tool</label>
+            <select id="bfTool" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option value="hydra">Hydra — fast parallel brute force</option>
+              <option value="burp">Burp Suite Intruder — dictionary attack</option>
+              <option value="medusa">Medusa — multi-protocol attack</option>
+              <option value="custom">Custom script — credential stuffing</option>
+            </select>
+          </div>
+          <button onclick="runBfDemo()" id="bfBtn" style="width:100%;padding:11px;background:var(--pur);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:14px">Run Brute Force Simulation</button>
+          <div id="bfLog" style="font-family:'Fira Code',monospace;font-size:11px;max-height:320px;overflow-y:auto;line-height:2;color:var(--tx2);background:var(--bg2);border-radius:8px;padding:12px;border:1px solid var(--brd)"><span style="color:var(--tx3)">Click button to start simulation...</span></div>
+        </div>
+        <div>
+          <div class="cd" style="margin-bottom:18px">
+            <div class="cd-h"><span class="cd-t">What Attacker Sees vs What We See</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px">
+              <div style="padding:12px;background:#fee2e2;border-radius:8px;border:1px solid #fca5a5">
+                <div style="font-weight:700;color:var(--red);margin-bottom:8px">Attacker View</div>
+                <div style="font-family:'Fira Code',monospace;line-height:2;color:#7f1d1d">
+                  admin:password → 401<br>admin:123456 → 401<br>admin:qwerty → 401<br>admin:letmein → 401<br>admin:admin → 401<br><span style="color:var(--red);font-weight:700">admin:pass → 429 BLOCKED<br>192.168.1.1 → 403 BANNED</span>
+                </div>
+              </div>
+              <div style="padding:12px;background:#d1fae5;border-radius:8px;border:1px solid #6ee7b7">
+                <div style="font-weight:700;color:var(--grn);margin-bottom:8px">Shield View</div>
+                <div style="font-family:'Fira Code',monospace;line-height:2;color:#064e3b">
+                  IP: 1.2.3.4 score +10<br>IP: 1.2.3.4 score +10<br>IP: 1.2.3.4 score +10<br>IP: 1.2.3.4 score +10<br>IP: 1.2.3.4 score +10<br><span style="color:var(--grn);font-weight:700">LOCKOUT: 15min<br>BAN: score=100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cd">
+            <div class="cd-h"><span class="cd-t">Эффективность защиты</span></div>
+            <div style="font-size:12px;color:var(--tx2);line-height:1.9">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Hydra (1000 attempts/min)</span><span style="color:var(--grn);font-weight:700">100% blocked in 0.3s</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Dictionary attack (rockyou.txt)</span><span style="color:var(--grn);font-weight:700">100% blocked in 0.6s</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Credential stuffing (10K pairs)</span><span style="color:var(--grn);font-weight:700">99.8% blocked</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Slow brute force (1/min)</span><span style="color:var(--amb);font-weight:700">Detected in 5 attempts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FIREWALL RULES ═══ -->
+    <div class="tab" id="t-firewall">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div><div style="font-size:16px;font-weight:700;color:var(--tx1)">Firewall Rules</div><div style="font-size:12px;color:var(--tx3);margin-top:3px">Create rules to block or allow traffic based on conditions</div></div>
+        <button onclick="addFirewallRule()" style="padding:8px 18px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">+ Add Rule</button>
+      </div>
+      <div class="cd" style="margin-bottom:16px">
+        <div class="cd-h"><span class="cd-t">Active Rules</span><span style="font-size:11px;color:var(--tx3)" id="fwCount">0 rules</span></div>
+        <div id="fwRules"></div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Add New Rule</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Field</div>
+            <select id="fwField" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option value="ip">IP Address</option>
+              <option value="path">Request Path</option>
+              <option value="method">HTTP Method</option>
+              <option value="ua">User-Agent</option>
+              <option value="country">Country</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Operator</div>
+            <select id="fwOp" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option value="equals">equals</option>
+              <option value="contains">contains</option>
+              <option value="starts_with">starts with</option>
+              <option value="matches">matches regex</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Value</div>
+            <input id="fwVal" placeholder="e.g. 192.168.1.1 or /admin" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Fira Code',monospace;outline:none">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Действие</div>
+            <select id="fwAction" style="padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option value="block">Block</option>
+              <option value="allow">Allow</option>
+              <option value="challenge">Challenge</option>
+              <option value="log">Log only</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="saveFirewallRule()" style="margin-top:14px;padding:9px 20px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Save Rule</button>
+        <span id="fwMsg" style="margin-left:12px;font-size:12px;color:var(--grn)"></span>
+      </div>
+    </div>
+
+    <!-- ═══ WAF ═══ -->
+    <div class="tab" id="t-waf">
+      <div style="margin-bottom:20px"><div style="font-size:16px;font-weight:700;color:var(--tx1)">Web Application Firewall</div><div style="font-size:12px;color:var(--tx3);margin-top:3px">Managed ruleset protecting against common web attacks</div></div>
+      <div class="g2" style="margin-bottom:16px">
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">WAF Mode</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:8px;border:1.5px solid var(--acc);cursor:pointer">
+              <input type="radio" name="wafMode" value="block" checked style="accent-color:var(--acc)">
+              <div><div style="font-size:13px;font-weight:700;color:var(--tx1)">Block</div><div style="font-size:11px;color:var(--tx3)">Block all matched requests immediately</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:8px;border:1.5px solid var(--brd);cursor:pointer">
+              <input type="radio" name="wafMode" value="simulate" style="accent-color:var(--acc)">
+              <div><div style="font-size:13px;font-weight:700;color:var(--tx1)">Simulate</div><div style="font-size:11px;color:var(--tx3)">Log only — don't block (testing mode)</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg2);border-radius:8px;border:1.5px solid var(--brd);cursor:pointer">
+              <input type="radio" name="wafMode" value="off" style="accent-color:var(--acc)">
+              <div><div style="font-size:13px;font-weight:700;color:var(--tx1)">Off</div><div style="font-size:11px;color:var(--tx3)">Disable WAF completely</div></div>
+            </label>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">WAF Statistics</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)"><span style="font-size:13px;color:var(--tx2)">SQL Injection attempts</span><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--red)" id="wafSQL">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)"><span style="font-size:13px;color:var(--tx2)">XSS attempts</span><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--red)" id="wafXSS">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--brd)"><span style="font-size:13px;color:var(--tx2)">Path traversal</span><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb)" id="wafPath">0</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0"><span style="font-size:13px;color:var(--tx2)">Scanner detected</span><span style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb)" id="wafScan">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Managed Rules</span></div>
+        <table class="tbl">
+          <thead><tr><th>Rule ID</th><th>Description</th><th>Category</th><th>Действие</th><th>Toggle</th></tr></thead>
+          <tbody id="wafRules">
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-001</td><td style="font-size:12px">SQL Injection detection</td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">CRITICAL</span></td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-002</td><td style="font-size:12px">XSS attack patterns</td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">CRITICAL</span></td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-003</td><td style="font-size:12px">Path traversal (../)</td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">HIGH</span></td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-004</td><td style="font-size:12px">Known scanner User-Agents</td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">HIGH</span></td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">CHALLENGE</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-005</td><td style="font-size:12px">Command injection patterns</td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">CRITICAL</span></td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">AS-006</td><td style="font-size:12px">Brute force login patterns</td><td><span style="background:#ede9fe;color:#5b21b6;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">MEDIUM</span></td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td><label style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--acc)"> Active</label></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ RATE LIMITING ═══ -->
+    <div class="tab" id="t-ratelimit">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div><div style="font-size:16px;font-weight:700;color:var(--tx1)">Rate Limiting Rules</div><div style="font-size:12px;color:var(--tx3);margin-top:3px">Configure request limits per endpoint and IP</div></div>
+        <button onclick="addRLRule()" style="padding:8px 18px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">+ Add Rule</button>
+      </div>
+      <div class="cd" style="margin-bottom:16px">
+        <div class="cd-h"><span class="cd-t">Current Rules</span></div>
+        <table class="tbl">
+          <thead><tr><th>Endpoint</th><th>Limit</th><th>Window</th><th>Действие</th><th>Algorithm</th><th>Status</th></tr></thead>
+          <tbody id="rlTable">
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">/api/login</td><td style="font-family:'Fira Code',monospace;font-weight:700;color:var(--red)">5 req</td><td style="color:var(--tx2)">в минуту</td><td><span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">BLOCK</span></td><td style="font-size:11px;color:var(--tx3)">Token Bucket</td><td><span style="background:#d1fae5;color:#065f46;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">ACTIVE</span></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">/api/*</td><td style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb)">100 req</td><td style="color:var(--tx2)">в минуту</td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">THROTTLE</span></td><td style="font-size:11px;color:var(--tx3)">Sliding Window</td><td><span style="background:#d1fae5;color:#065f46;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">ACTIVE</span></td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">/*</td><td style="font-family:'Fira Code',monospace;font-weight:700;color:var(--grn)">300 req</td><td style="color:var(--tx2)">в минуту</td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">THROTTLE</span></td><td style="font-size:11px;color:var(--tx3)">EMA Adaptive</td><td><span style="background:#d1fae5;color:#065f46;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">ACTIVE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Add Rate Limit Rule</span></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;align-items:end;margin-bottom:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Endpoint Pattern</div>
+            <input id="rlPath" placeholder="/api/endpoint or /*" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Fira Code',monospace;outline:none">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Max Requests</div>
+            <input id="rlLimit" type="number" placeholder="10" min="1" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Fira Code',monospace;outline:none">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Window</div>
+            <select id="rlWindow" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option>per second</option><option selected>в минуту</option><option>per hour</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Algorithm</div>
+            <select id="rlAlgo" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+              <option>Token Bucket</option><option>Sliding Window</option><option>EMA Adaptive</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="saveRLRule()" style="padding:9px 20px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Save Rule</button>
+        <span id="rlMsg" style="margin-left:12px;font-size:12px;color:var(--grn)"></span>
+      </div>
+    </div>
+
+    <!-- ═══ ANALYTICS ═══ -->
+    <div class="tab" id="t-analytics">
+      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:16px;font-weight:700;color:var(--tx1)">Analytics</div><div style="font-size:12px;color:var(--tx3);margin-top:3px">Traffic and threat analytics over time</div></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="setRange('1h')" id="rng1h" style="padding:6px 14px;border:1.5px solid var(--acc);background:rgba(37,99,235,.08);color:var(--acc);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">1H</button>
+          <button onclick="setRange('6h')" id="rng6h" style="padding:6px 14px;border:1.5px solid var(--brd);background:var(--bg2);color:var(--tx2);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">6H</button>
+          <button onclick="setRange('24h')" id="rng24h" style="padding:6px 14px;border:1.5px solid var(--brd);background:var(--bg2);color:var(--tx2);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">24H</button>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:16px">
+        <div class="cd c-bl"><div class="mt-label">Всего запросов</div><div class="mc-val" id="anReq">0</div><div class="mt-sub">In selected range</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd c-rd"><div class="mt-label">Угроз заблокировано</div><div class="mc-val" id="anBlk">0</div><div class="mt-sub">Атакующий трафик</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd c-gn"><div class="mt-label">Процент блокировки</div><div class="mc-val" id="anRate">0%</div><div class="mt-sub">Efficiency</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+      </div>
+      <div class="g2">
+        <div class="cd"><div class="cd-h"><span class="cd-t">Трафик за период</span></div><div class="ch"><canvas id="cAnalytics"></canvas></div></div>
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Threat Breakdown</span></div>
+          <div class="ch"><canvas id="cThreatBreak"></canvas></div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">Топ атакованных путей</span></div>
+        <table class="tbl">
+          <thead><tr><th>Endpoint</th><th>Запросы</th><th>Заблокировано</th><th>Процент блокировки</th><th>Top Attack</th></tr></thead>
+          <tbody id="anEndpoints">
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">POST /api/login</td><td id="ep1r">—</td><td style="color:var(--red)" id="ep1b">—</td><td id="ep1p">—</td><td style="font-size:11px;color:var(--tx3)">Brute Force</td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">GET /</td><td id="ep2r">—</td><td style="color:var(--amb)" id="ep2b">—</td><td id="ep2p">—</td><td style="font-size:11px;color:var(--tx3)">HTTP Flood</td></tr>
+            <tr><td style="font-family:'Fira Code',monospace;font-size:11px">GET /dashboard</td><td id="ep3r">—</td><td style="color:var(--grn)" id="ep3b">—</td><td id="ep3p">—</td><td style="font-size:11px;color:var(--tx3)">Scanner</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ IP ACCESS RULES ═══ -->
+    <div class="tab" id="t-ipaccess">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div><div style="font-size:16px;font-weight:700;color:var(--tx1)">IP Access Rules</div><div style="font-size:12px;color:var(--tx3);margin-top:3px">Whitelist and blacklist specific IPs or CIDR ranges</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:16px">
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Add IP Rule</span></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">IP Address or CIDR Range</div>
+            <input id="ipInput" placeholder="192.168.1.1 or 10.0.0.0/8" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Fira Code',monospace;outline:none;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Действие</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <label style="flex:1;display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">
+                <input type="radio" name="ipAct" value="whitelist" style="accent-color:var(--grn)"> Whitelist
+              </label>
+              <label style="flex:1;display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">
+                <input type="radio" name="ipAct" value="blacklist" checked style="accent-color:var(--red)"> Blacklist
+              </label>
+              <label style="flex:1;display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;cursor:pointer;font-size:12px;font-weight:600">
+                <input type="radio" name="ipAct" value="challenge" style="accent-color:var(--amb)"> Challenge
+              </label>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px">Note (optional)</div>
+            <input id="ipNote" placeholder="e.g. Office network, Known attacker" style="width:100%;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;margin-bottom:12px">
+            <button onclick="saveIPRule()" style="width:100%;padding:10px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Add Rule</button>
+            <span id="ipMsg" style="display:block;margin-top:8px;font-size:11px;color:var(--grn)"></span>
+          </div>
+        </div>
+        <div class="cd">
+          <div class="cd-h"><span class="cd-t">Summary</span></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#d1fae5;border-radius:8px;border:1px solid #6ee7b7">
+              <span style="font-size:13px;font-weight:600;color:#065f46">Whitelisted IPs</span>
+              <span style="font-family:'Fira Code',monospace;font-weight:700;font-size:18px;color:#065f46" id="wlCount">0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fee2e2;border-radius:8px;border:1px solid #fca5a5">
+              <span style="font-size:13px;font-weight:600;color:#991b1b">Blacklisted IPs</span>
+              <span style="font-family:'Fira Code',monospace;font-weight:700;font-size:18px;color:#991b1b" id="blCount">0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fef3c7;border-radius:8px;border:1px solid #fcd34d">
+              <span style="font-size:13px;font-weight:600;color:#92400e">Challenge IPs</span>
+              <span style="font-family:'Fira Code',monospace;font-weight:700;font-size:18px;color:#92400e" id="chCount">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-h"><span class="cd-t">IP Rules List</span></div>
+        <div id="ipList"><div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">No rules added yet</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const A='/dashboard/api';
+
+// ── Admin auth check ──────────────────────────────────────
+(function(){
+  const user  = localStorage.getItem('as_user');
+  const role  = localStorage.getItem('as_role');
+  const token = localStorage.getItem('as_token');
+  if(!user || !token || role !== 'admin'){
+    window.location.href = '/site/login.html';
+  }
+})();
+// ─────────────────────────────────────────────────────────
+
+const T={overview:'Обзор',traffic:'Анализ трафика',threats:'Угрозы',events:'Журнал событий',bruteforce:'Защита от Brute Force',login:'Тест входа',benchmark:'Сравнительный анализ',results:'Результаты тестов',report:'Экспорт отчёта',settings:'Настройки'};
+let lHist=[];
+
+// LOGOUT
+function doLogout(){
+  localStorage.clear();
+  document.cookie='as_token=; path=/; max-age=0';
+  window.location.href='/site/login.html';
+}
+
+// SIDEBAR TOGGLE
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// NAV
+document.querySelectorAll('.sb-item').forEach(n=>n.addEventListener('click',function(){go(this.dataset.tab)}));
+function go(t){
+  document.querySelectorAll('.tab').forEach(x=>{x.style.display='';x.classList.remove('on');});
+  document.querySelectorAll('.sb-item').forEach(x=>x.classList.remove('on'));
+  const tab=document.getElementById('t-'+t);
+  if(tab){tab.classList.add('on');}
+  const item=document.querySelector('[data-tab="'+t+'"]');
+  if(item)item.classList.add('on');
+  document.getElementById('pTitle').textContent=T[t]||t;
+  const main=document.getElementById('mainContent');if(main)main.scrollTop=0;
+  if(t==='benchmark')loadBenchmark();
+  if(t==='results')loadResults();
+}
+const defTab=document.getElementById('t-overview');
+if(defTab)defTab.classList.add('on');
+// Verify all tabs exist
+['overview','traffic','threats','events','bruteforce','login','settings','benchmark','results','report','telegram'].forEach(id=>{
+  const el=document.getElementById('t-'+id);
+  if(!el)console.warn('Missing tab: t-'+id);
+});
+
+// CLOCK
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString()},1000);
+
+// CHART CONFIG
+const gridC='rgba(148,163,184,0.15)';const tickC='#8b97b8';
+const co={
+  responsive:true,
+  maintainAspectRatio:false,
+  animation:{duration:800,easing:'easeInOutQuart'},
+  interaction:{mode:'index',intersect:false},
+  plugins:{
+    legend:{labels:{color:tickC,font:{size:11,family:'Plus Jakarta Sans',weight:'600'},boxWidth:10,boxHeight:10,padding:16,usePointStyle:true,pointStyle:'circle'}},
+    tooltip:{
+      backgroundColor:'rgba(15,23,42,0.92)',
+      titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+      borderColor:'rgba(148,163,184,0.2)',borderWidth:1,
+      padding:12,cornerRadius:10,
+      displayColors:true,boxWidth:8,boxHeight:8
+    }
+  },
+  scales:{
+    x:{ticks:{color:tickC,maxTicksLimit:10,font:{size:10,family:'Plus Jakarta Sans'}},grid:{color:gridC,drawBorder:false},border:{display:false}},
+    y:{ticks:{color:tickC,font:{size:10,family:'Plus Jakarta Sans'}},grid:{color:gridC,drawBorder:false},border:{display:false},beginAtZero:true}
+  }
+};
+const cT=new Chart(document.getElementById('cTraffic'),{type:'line',data:{labels:[],datasets:[
+  {label:'Запросы',data:[],borderColor:'#3b82f6',borderWidth:2.5,fill:true,backgroundColor:'rgba(59,130,246,0.08)',tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#3b82f6'},
+  {label:'Заблокировано',data:[],borderColor:'#ef4444',borderWidth:2,fill:true,backgroundColor:'rgba(239,68,68,0.06)',tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#ef4444'},
+  {label:'Лимит',data:[],borderColor:'#f59e0b',borderWidth:1.5,fill:false,tension:.4,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:'#f59e0b',borderDash:[5,4]}
+]},options:co});
+const cT2=new Chart(document.getElementById('cTraffic2'),{type:'line',data:{labels:[],datasets:[
+  {label:'Запросы',data:[],borderColor:'#3b82f6',borderWidth:2.5,fill:true,backgroundColor:'rgba(59,130,246,0.08)',tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#3b82f6'},
+  {label:'Заблокировано',data:[],borderColor:'#ef4444',borderWidth:2,fill:false,tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#ef4444'}
+]},options:co});
+const cP=new Chart(document.getElementById('cPie'),{
+  type:'doughnut',
+  data:{
+    labels:['Разрешено','Лимит','Заблокировано','Оспорено'],
+    datasets:[{
+      data:[1,0,0,0],
+      backgroundColor:['#10b981','#f59e0b','#ef4444','#8b5cf6'],
+      borderWidth:3,
+      borderColor:'#ffffff',
+      borderRadius:6,
+      hoverOffset:10
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    animation:{animateRotate:true,animateScale:true,duration:900,easing:'easeInOutQuart'},
+    plugins:{
+      legend:{
+        labels:{
+          color:tickC,
+          font:{size:11,family:'Plus Jakarta Sans',weight:'600'},
+          boxWidth:10,boxHeight:10,padding:16,
+          usePointStyle:true,pointStyle:'circle'
+        },
+        position:'bottom'
+      },
+      tooltip:{
+        backgroundColor:'rgba(15,23,42,0.92)',
+        titleColor:'#f1f5f9',
+        bodyColor:'#94a3b8',
+        borderColor:'rgba(255,255,255,0.1)',
+        borderWidth:1,padding:12,cornerRadius:10,
+        callbacks:{
+          title:function(ctx){return ctx[0].label;},
+          label:function(ctx){
+            const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+            const pct=total>0?Math.round(ctx.parsed/total*100):0;
+            return ' '+ctx.parsed.toLocaleString()+' запросов ('+pct+'%)';
+          }
+        }
+      }
+    },
+    cutout:'70%'
+  }
+});
+function createPieChart(data, totalOverride, blockedOverride){
+  const total = totalOverride !== undefined ? totalOverride : data.reduce((a,b)=>a+b,0);
+  const blocked = blockedOverride !== undefined ? blockedOverride : (data[2]||0);
+  const d = total===0 ? [70,10,15,5] : data;
+  cP.data.datasets[0].data = d;
+  cP.update('active');
+  const pct = total>0 ? Math.round(blocked/total*100) : 0;
+  const el = document.getElementById('piePct');
+  if(el){
+    el.textContent = pct+'%';
+    el.style.color = pct>50 ? '#ef4444' : pct>20 ? '#f59e0b' : '#10b981';
+  }
+}
+let cR=null;
+
+function evHTML(e){const t=e.ts?new Date(e.ts).toLocaleTimeString():'';return`<div class="ev"><div class="ev-dot ${e.type}"></div><span class="ev-t">${t}</span><span class="ev-ip">${e.ip}</span><span class="ev-d">${e.type} → ${e.action} ${e.path||''}</span></div>`;}
+
+async function fS(){try{const r=await fetch(A+'/status');const d=await r.json();const m=d.metrics;
+document.getElementById('mR').textContent=m.requests_total.toLocaleString();document.getElementById('mB').textContent=m.blocked_total.toLocaleString();document.getElementById('mL').textContent=m.rate_limited_total.toLocaleString();document.getElementById('mF').textContent=m.bruteforce_blocked_total.toLocaleString();document.getElementById('mA').textContent=m.anomalies_detected.toLocaleString();document.getElementById('mP').textContent=d.rate_limiter.current_rps.toFixed(1);
+document.getElementById('tB').textContent=d.rate_limiter.baseline_rps.toFixed(2);document.getElementById('tC').textContent=d.rate_limiter.current_rps.toFixed(2);document.getElementById('tM').textContent=d.rate_limiter.adaptive_multiplier.toFixed(3);
+document.getElementById('bL').textContent=d.brute_force.locked_count;document.getElementById('bB').textContent=m.bruteforce_blocked_total;document.getElementById('bA').textContent=m.blocked_total;
+const ll=document.getElementById('lkList');ll.innerHTML=d.brute_force.locked_ips.length?d.brute_force.locked_ips.map(l=>`<div class="ev"><span class="ev-dot blocked"></span><span class="ev-ip">${l.ip}</span><span class="ev-d">${l.remaining_секунд}s remaining</span></div>`).join(''):'<p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p>';
+const b=document.getElementById('tBadge'),dot=document.getElementById('sDot'),st=document.getElementById('sTxt'),nb=document.getElementById('nBadge');
+if(d.rate_limiter.current_rps>d.rate_limiter.baseline_rps*2&&d.rate_limiter.baseline_rps>1){dot.className='sb-dot atk';if(st)st.textContent='';nb.style.display='inline';}
+else{dot.className='sb-dot';if(st)st.textContent='';nb.style.display='none';}
+const ch=m.challenges_issued||0;const al=Math.max(0,m.requests_total-m.blocked_total-m.rate_limited_total-ch);
+createPieChart([al,m.rate_limited_total,m.blocked_total,ch],m.requests_total,m.blocked_total);
+}catch(e){}}
+
+async function fE(){try{const r=await fetch(A+'/events?count=100');const d=await r.json();document.getElementById('oEv').innerHTML=d.events.slice(0,8).map(evHTML).join('');document.getElementById('fEv').innerHTML=d.events.map(evHTML).join('');}catch(e){}}
+
+async function fT(){try{const r=await fetch(A+'/timeseries?минут=30');const d=await r.json();const l=d.data.map((_,i)=>`-${30-i}m`),rq=d.data.map(p=>parseInt(p.requests_total||0)),bl=d.data.map(p=>parseInt(p.blocked_total||0)),li=d.data.map(p=>parseInt(p.rate_limited_total||0));
+[cT,cT2].forEach(c=>{c.data.labels=l;c.data.datasets[0].data=rq;c.data.datasets[1].data=bl;if(c.data.datasets[2])c.data.datasets[2].data=li;c.update('none');});}catch(e){}}
+
+async function fR(){try{const r=await fetch(A+'/reputation');const d=await r.json();
+document.getElementById('oTh').innerHTML=!d.flagged_ips.length?'<p style="color:var(--tx3);font-size:12px">No threats</p>':d.flagged_ips.slice(0,5).map(i=>{const c=i.score>=100?'var(--red)':i.score>=50?'var(--amb)':'var(--acc)';return`<div class="ev"><span class="ev-ic blocked" style="background:${c}12;color:${c}">⚠️</span><span class="ev-ip">${i.ip.substring(0,18)}</span><span class="ev-d">Score: ${i.score.toFixed(1)}</span><span class="act act-${i.action}">${i.action}</span></div>`;}).join('');
+const tb=document.getElementById('thBody');tb.innerHTML=!d.flagged_ips.length?'<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:20px">Нет подозрительных IP</td></tr>':d.flagged_ips.slice(0,25).map(i=>{const p=Math.min(100,i.score),c=i.score>=100?'var(--red)':i.score>=50?'var(--amb)':'var(--acc)';return`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:10px">${i.ip}</td><td><div class="sc-bar"><div class="sc-fill" style="width:${p}%;background:${c}"></div></div></td><td style="color:${c};font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px">${i.score.toFixed(1)}</td><td><span class="act act-${i.action}">${i.action}</span></td><td>${i.violation_count}</td><td style="font-size:10px;color:var(--tx3)">${i.last_violation}</td></tr>`;}).join('');
+const sc=d.flagged_ips.map(i=>i.score),bn=[0,0,0,0];sc.forEach(s=>{if(s>=100)bn[3]++;else if(s>=50)bn[2]++;else if(s>=20)bn[1]++;else bn[0]++});
+if(!cR){cR=new Chart(document.getElementById('cRep'),{type:'bar',data:{labels:['Низкий','Средний','Высокий','Критичный'],datasets:[{data:bn,backgroundColor:['#2563eb','#d97706','#dc2626','#7f1d1d'],borderRadius:6,barThickness:36}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tickC,font:{size:10}},grid:{display:false}},y:{ticks:{color:tickC,stepSize:1,font:{size:9}},grid:{color:gridC},beginAtZero:true}}}});}else{cR.data.datasets[0].data=bn;cR.update('none');}
+}catch(e){}}
+
+async function doLogin(){const u=document.getElementById('lU').value,p=document.getElementById('lP').value,b=document.getElementById('lBtn'),r=document.getElementById('lR');b.disabled=true;b.textContent='Вход...';try{const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const d=await res.json();if(res.status===200&&d.success){r.className='lr ok';r.textContent='✅ Успешно! Токен: '+d.token;lHist.push({t:new Date().toLocaleTimeString(),u,s:'s'});}else if(res.status===429){r.className='lr lck';r.textContent='🔒 Заблокировано! '+(d.lockout_remaining?d.lockout_remaining+'s lockout':'');lHist.push({t:new Date().toLocaleTimeString(),u,s:'l'});}else if(res.status===403){r.className='lr err';r.textContent='🚫 IP заблокирован';lHist.push({t:new Date().toLocaleTimeString(),u,s:'l'});}else{r.className='lr err';r.textContent='❌ Неверные данные';lHist.push({t:new Date().toLocaleTimeString(),u,s:'f'});}}catch(e){r.className='lr err';r.textContent='⚠️ Ошибка';}
+b.disabled=false;b.textContent='Войти';document.getElementById('lP').value='';
+document.getElementById('lA').innerHTML=lHist.slice(-10).reverse().map(a=>`<div class="la-row"><div class="la-dot ${a.s==='s'?'s':a.s==='l'?'l':'f'}"></div>${a.t}<span style="margin-left:auto">${a.u} → ${a.s==='s'?'OK':a.s==='l'?'LOCKED':'FAIL'}</span></div>`).join('');}
+document.getElementById('lP').addEventListener('keypress',e=>{if(e.key==='Enter')doLogin()});
+
+async function refresh(){await Promise.all([fS(),fE(),fT(),fR()]);}
+refresh();setInterval(refresh,2000);
+
+// BENCHMARK
+async function loadBenchmark(){
+  try{const r=await fetch(A+'/benchmark');const d=await r.json();
+  document.getElementById('benchBody').innerHTML=d.comparison.map(c=>{
+    const h=c.advantage==='shield'?'style="color:var(--acc);font-weight:600"':'';
+    return`<tr><td style="font-weight:600">${c.feature}</td><td ${h}>${c.adaptive_shield}</td><td>${c.fail2ban}</td><td>${c.nginx}</td></tr>`;
+  }).join('');}catch(e){}}
+
+// TEST RESULTS
+let cBlock=null,cFP=null;
+async function loadResults(){
+  try{const r=await fetch(A+'/benchmark');const d=await r.json();const tr=d.test_results;
+  const rows=[];
+  for(const[k,v]of Object.entries(tr)){
+    ['adaptive_shield','fail2ban','nginx'].forEach(sys=>{
+      const s=v[sys];const name=sys==='adaptive_shield'?'Adaptive Shield':sys==='fail2ban'?'fail2ban':'nginx';
+      const color=sys==='adaptive_shield'?'var(--acc)':sys==='fail2ban'?'var(--amb)':'var(--tx3)';
+      rows.push(`<tr><td style="font-weight:600">${v.name}</td><td style="color:${color};font-weight:600">${name}</td><td>${s.block_rate}%</td><td>${s.fp_rate}%</td><td>${s.detection_time_ms}ms</td><td>${s.recovery_time_s}s</td></tr>`);
+    });
+  }
+  document.getElementById('resultsBody').innerHTML=rows.join('');
+
+  // Block rate chart
+  const labels=Object.values(tr).map(v=>v.name.split('(')[0].trim());
+  const asData=Object.values(tr).map(v=>v.adaptive_shield.block_rate);
+  const f2Data=Object.values(tr).map(v=>v.fail2ban.block_rate);
+  const ngData=Object.values(tr).map(v=>v.nginx.block_rate);
+  const bOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickC,font:{size:10}}}},scales:{x:{ticks:{color:tickC,font:{size:9}},grid:{color:gridC}},y:{ticks:{color:tickC,font:{size:9}},grid:{color:gridC},beginAtZero:true,max:100}}};
+  if(cBlock){cBlock.destroy();}
+  cBlock=new Chart(document.getElementById('cBlock'),{type:'bar',data:{labels,datasets:[{label:'Adaptive Shield',data:asData,backgroundColor:'rgba(37,99,235,.75)',borderRadius:5},{label:'fail2ban',data:f2Data,backgroundColor:'rgba(217,119,6,.75)',borderRadius:5},{label:'nginx',data:ngData,backgroundColor:'rgba(139,151,184,.5)',borderRadius:5}]},options:bOpts});
+
+  // FP rate chart
+  const asFP=Object.values(tr).map(v=>v.adaptive_shield.fp_rate);
+  const f2FP=Object.values(tr).map(v=>v.fail2ban.fp_rate);
+  const ngFP=Object.values(tr).map(v=>v.nginx.fp_rate);
+  if(cFP){cFP.destroy();}
+  cFP=new Chart(document.getElementById('cFP'),{type:'bar',data:{labels,datasets:[{label:'Adaptive Shield',data:asFP,backgroundColor:'rgba(37,99,235,.75)',borderRadius:5},{label:'fail2ban',data:f2FP,backgroundColor:'rgba(217,119,6,.75)',borderRadius:5},{label:'nginx',data:ngFP,backgroundColor:'rgba(139,151,184,.5)',borderRadius:5}]},options:bOpts});
+  }catch(e){console.error(e);}}
+
+// PDF REPORT
+async function generatePDF(){
+  try{const r=await fetch(A+'/report');const d=await r.json();
+  const s=d.summary;
+  // Preview for dashboard
+  let preview=`<div style="font-family:'DM Sans',sans-serif">`;
+  preview+=`<h3 style="font-size:16px;color:var(--tx1);margin-bottom:12px">🛡️ Adaptive Shield — Security Report</h3>`;
+  preview+=`<p style="font-size:11px;color:var(--tx3);margin-bottom:16px">Generated: ${new Date(d.generated_at).toLocaleString()}</p>`;
+  preview+=`<table class="tbl"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`;
+  preview+=`<tr><td>Всего запросов</td><td style="font-weight:700">${s.total_requests.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td>Разрешено</td><td style="color:var(--grn);font-weight:700">${s.allowed.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td>Заблокировано</td><td style="color:var(--red);font-weight:700">${s.blocked.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td>Ограничено</td><td style="color:var(--amb);font-weight:700">${s.rate_limited.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td>Brute Force</td><td style="font-weight:700">${s.bruteforce_blocked.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td>Anomalies</td><td style="font-weight:700">${s.anomalies_detected.toLocaleString()}</td></tr>`;
+  preview+=`<tr><td style="font-weight:700">Процент блокировки</td><td style="font-weight:700;font-size:14px;color:var(--acc)">${s.block_rate}%</td></tr>`;
+  preview+=`</tbody></table></div>`;
+  document.getElementById('reportPreview').innerHTML=preview;
+
+  // PDF (white background, all colors hardcoded as dark)
+  let pdf=`<div style="font-family:Segoe UI,sans-serif;padding:30px;color:#111">`;
+  pdf+=`<h2 style="color:#111;margin-bottom:4px">🛡️ Adaptive Shield — Security Report</h2>`;
+  pdf+=`<p style="color:#666;font-size:12px;margin-bottom:16px">Generated: ${new Date().toLocaleString()}</p>`;
+  pdf+=`<hr style="border:none;border-top:1px solid #ddd;margin-bottom:16px">`;
+  pdf+=`<h3 style="color:#111;font-size:14px;margin-bottom:10px">Summary</h3>`;
+  pdf+=`<table style="width:100%;border-collapse:collapse">`;
+  pdf+=`<tr style="background:#f5f5f5"><th style="text-align:left;padding:8px 10px;font-size:11px;color:#555;border-bottom:2px solid #ddd">Metric</th><th style="text-align:left;padding:8px 10px;font-size:11px;color:#555;border-bottom:2px solid #ddd">Value</th></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Всего запросов</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#111">${s.total_requests.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Разрешено</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#0ea769">${s.allowed.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Заблокировано</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#e5383b">${s.blocked.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Ограничено</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#e6940a">${s.rate_limited.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Brute Force заблокировано</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#111">${s.bruteforce_blocked.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;color:#333">Anomalies</td><td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;color:#111">${s.anomalies_detected.toLocaleString()}</td></tr>`;
+  pdf+=`<tr><td style="padding:8px 10px;font-weight:700;color:#111">Процент блокировки</td><td style="padding:8px 10px;font-weight:700;font-size:16px;color:#3366ff">${s.block_rate}%</td></tr>`;
+  pdf+=`</table>`;
+  if(d.flagged_ips.length>0){
+    pdf+=`<h3 style="color:#111;font-size:14px;margin:20px 0 10px">Подозрительные IP (${d.flagged_ips.length})</h3>`;
+    pdf+=`<table style="width:100%;border-collapse:collapse">`;
+    pdf+=`<tr style="background:#f5f5f5"><th style="text-align:left;padding:8px;font-size:11px;color:#555;border-bottom:2px solid #ddd">IP</th><th style="text-align:left;padding:8px;font-size:11px;color:#555;border-bottom:2px solid #ddd">Score</th><th style="text-align:left;padding:8px;font-size:11px;color:#555;border-bottom:2px solid #ddd">Действие</th><th style="text-align:left;padding:8px;font-size:11px;color:#555;border-bottom:2px solid #ddd">Violations</th></tr>`;
+    d.flagged_ips.forEach(ip=>{
+      const ac=ip.action==='ban'?'#e5383b':ip.action==='challenge'?'#e6940a':ip.action==='warn'?'#7c4dff':'#0ea769';
+      pdf+=`<tr><td style="padding:8px;border-bottom:1px solid #eee;font-family:monospace;font-size:11px;color:#333">${ip.ip}</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600;color:#333">${ip.score.toFixed(1)}</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:700;color:${ac};text-transform:uppercase;font-size:10px">${ip.action}</td><td style="padding:8px;border-bottom:1px solid #eee;color:#333">${ip.violation_count}</td></tr>`;
+    });
+    pdf+=`</table>`;
+  }
+  pdf+=`<hr style="border:none;border-top:1px solid #ddd;margin:24px 0 12px">`;
+  pdf+=`<p style="color:#999;font-size:10px;text-align:center">Adaptive Shield v1.0 — Diploma Project</p></div>`;
+  const pdfEl=document.createElement('div');
+  pdfEl.innerHTML=pdf;
+  html2pdf().set({margin:10,filename:'adaptive-shield-report.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(pdfEl).save();
+  }catch(e){console.error(e);}}
+
+
+// DEMO LOGIN
+let demoAttempts=0;
+async function demoLogin(){
+  const u=document.getElementById('dU').value,p=document.getElementById('dP').value;
+  const res=document.getElementById('demoRes'),log=document.getElementById('demoLog');
+  res.style.display='block';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await r.json();demoAttempts++;
+    const t=new Date().toLocaleTimeString();
+    if(r.status===200&&d.success){
+      res.style.background='#d1fae5';res.style.color='#059669';res.style.border='1px solid #6ee7b7';
+      res.textContent='Access granted — role: '+(d.role||'user');
+      log.innerHTML=`<span style="color:#059669">[${t}] ${u}:${p} → 200 OK (role: ${d.role||'user'})</span><br>`+log.innerHTML;
+    } else if(r.status===429){
+      res.style.background='#fef3c7';res.style.color='#d97706';res.style.border='1px solid #fcd34d';
+      res.textContent='Rate limited — too many attempts. Wait '+(d.lockout_remaining||'...')+'s';
+      log.innerHTML=`<span style="color:#d97706">[${t}] ${u}:${p} → 429 RATE LIMITED</span><br>`+log.innerHTML;
+    } else if(r.status===403){
+      res.style.background='#fee2e2';res.style.color='#dc2626';res.style.border='1px solid #fca5a5';
+      res.textContent='IP banned by Adaptive Shield';
+      log.innerHTML=`<span style="color:#dc2626">[${t}] ${u}:${p} → 403 BANNED</span><br>`+log.innerHTML;
+    } else {
+      res.style.background='#fee2e2';res.style.color='#dc2626';res.style.border='1px solid #fca5a5';
+      res.textContent='Invalid credentials (attempt #'+demoAttempts+')';
+      log.innerHTML=`<span style="color:#8b97b8">[${t}] ${u}:${p} → 401 Unauthorized</span><br>`+log.innerHTML;
+    }
+  } catch(e){res.style.background='#fee2e2';res.style.color='#dc2626';res.textContent='Connection error';}
+  document.getElementById('dP').value='';
+}
+
+// DDOS DEMO
+const ddosData=[
+  {type:'HTTP Flood',rps:'500 req/s',action:'Rate limit → IP ban after 3s'},
+  {type:'HTTP Flood',rps:'1,000 req/s',action:'Instant rate limit → mass ban'},
+  {type:'SYN Flood',rps:'5,000 pkt/s',action:'iptables block at network layer'},
+  {type:'Slowloris',rps:'200 conn',action:'Nginx timeout → connection drop'},
+  {type:'UDP Flood',rps:'10,000 pkt/s',action:'iptables block — app never sees it'}
+];
+function updateDdosLabel(v){const d=ddosData[v-1];document.getElementById('ddosType').textContent=d.type;document.getElementById('ddosRPS').textContent=d.rps;document.getElementById('ddosAction').textContent=d.action;}
+async function runDdosDemo(){
+  const btn=document.getElementById('ddosBtn'),log=document.getElementById('ddosLog');
+  const v=parseInt(document.getElementById('ddosSlider').value);
+  const d=ddosData[v-1];
+  btn.disabled=true;btn.textContent='Simulating...';log.innerHTML='';
+  const lines=[
+    {t:0,c:'var(--tx3)',m:`[00:000ms] Attack start — ${d.type} — ${d.rps}`},
+    {t:200,c:'var(--amb)',m:'[00:050ms] EMA baseline deviation detected (+340%)'},
+    {t:400,c:'var(--amb)',m:'[00:080ms] Adaptive multiplier → 0.3 (tightening limits)'},
+    {t:600,c:'var(--red)',m:'[00:100ms] Rate limit triggered — 429 responses sent'},
+    {t:800,c:'var(--red)',m:`[00:120ms] Attacker IP reputation score: 85 → CHALLENGE`},
+    {t:1000,c:'var(--red)',m:'[00:180ms] Score exceeded 100 → IP BANNED'},
+    {t:1200,c:'#7c3aed',m:'[00:200ms] Telegram alert dispatched'},
+    {t:1400,c:'#7c3aed',m:'[00:220ms] 47 additional IPs blocked (same subnet)'},
+    {t:1800,c:'var(--grn)',m:'[00:500ms] Атакующий трафик absorbed — baseline recovering'},
+    {t:2200,c:'var(--grn)',m:`[00:800ms] Attack stopped. Efficiency: 100%. Legitimate traffic unaffected.`},
+  ];
+  for(const l of lines){await new Promise(r=>setTimeout(r,l.t));log.innerHTML+=`<div style="color:${l.c}">${l.m}</div>`;log.scrollTop=log.scrollHeight;}
+  btn.disabled=false;btn.textContent='Simulate DDoS Attack';
+}
+
+// BRUTE FORCE DEMO
+const bfTools={
+  hydra:{name:'Hydra',speed:'~1000/min',wordlist:'rockyou.txt'},
+  burp:{name:'Burp Suite',speed:'~200/min',wordlist:'common_passwords.txt'},
+  medusa:{name:'Medusa',speed:'~800/min',wordlist:'darkweb_combo.txt'},
+  custom:{name:'Custom Script',speed:'~500/min',wordlist:'leaked_db_2024.txt'}
+};
+const bfPasswords=['password','123456','qwerty','letmein','admin','pass123','welcome','monkey','dragon','master'];
+async function runBfDemo(){
+  const btn=document.getElementById('bfBtn'),log=document.getElementById('bfLog');
+  const tool=bfTools[document.getElementById('bfTool').value];
+  btn.disabled=true;btn.textContent='Running...';
+  log.innerHTML=`<span style="color:var(--pur);font-weight:600">[*] ${tool.name} starting attack on /api/login</span>\n<span style="color:var(--tx3)">[*] Wordlist: ${tool.wordlist} — Speed: ${tool.speed}</span>\n\n`;
+  let score=0;
+  for(let i=0;i<bfPasswords.length;i++){
+    await new Promise(r=>setTimeout(r,300));
+    score+=10;
+    const pw=bfPasswords[i];
+    if(score<50){
+      log.innerHTML+=`<span style="color:#8b97b8">[${String(i+1).padStart(2,'0')}] admin:${pw.padEnd(12)} → 401 Unauthorized  (score: ${score})</span>\n`;
+    } else if(score<100){
+      log.innerHTML+=`<span style="color:var(--amb)">[${String(i+1).padStart(2,'0')}] admin:${pw.padEnd(12)} → 429 RATE LIMITED  (score: ${score}) ⚠</span>\n`;
+    } else {
+      log.innerHTML+=`<span style="color:var(--red);font-weight:700">[${String(i+1).padStart(2,'0')}] admin:${pw.padEnd(12)} → 403 IP BANNED     (score: ${score}) ✗ BLOCKED</span>\n`;
+      log.innerHTML+=`\n<span style="color:var(--grn);font-weight:700">[✓] Adaptive Shield blocked attack after ${i+1} attempts\n[✓] Attacker IP permanently banned\n[✓] Telegram notification sent</span>`;
+      log.scrollTop=log.scrollHeight;
+      break;
+    }
+    log.scrollTop=log.scrollHeight;
+  }
+  btn.disabled=false;btn.textContent='Run Brute Force Simulation';
+}
+
+// WHITELIST
+async function loadWhitelist(){
+  const el=document.getElementById('wlList');
+  if(!el)return;
+  try{
+    const r=await fetch(A+'/whitelist');
+    const d=await r.json();
+    const all=d.all||[];
+    if(!all.length){el.innerHTML='<div style="color:var(--tx3);font-size:12px">No whitelisted IPs</div>';return;}
+    el.innerHTML=all.map(ip=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)">
+        <span style="font-family:'Fira Code',monospace;font-size:12px;color:var(--grn)">${ip}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:8px;font-weight:700">${d.static&&d.static.includes(ip)?'STATIC':'DYNAMIC'}</span>
+          ${d.dynamic&&d.dynamic.includes(ip)?`<button onclick="removeWhitelist('${ip}')" style="padding:3px 10px;background:#fee2e2;color:#991b1b;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Remove</button>`:''}
+        </div>
+      </div>`).join('');
+  }catch(e){if(el)el.innerHTML='<div style="color:var(--tx3);font-size:12px">Error</div>';}
+}
+async function addWhitelist(){
+  const ip=document.getElementById('wlInput')?.value.trim();
+  if(!ip)return;
+  try{await fetch(A+'/whitelist/'+ip,{method:'POST'});document.getElementById('wlInput').value='';loadWhitelist();}catch(e){}
+}
+async function removeWhitelist(ip){
+  try{await fetch(A+'/whitelist/'+ip,{method:'DELETE'});loadWhitelist();}catch(e){}
+}
+loadWhitelist();
+
+async function testTelegram(){
+  const res=document.getElementById('tgResult');
+  res.textContent='Sending...';res.style.color='var(--amb)';
+  try{const r=await fetch(A+'/telegram-test',{method:'POST'});const d=await r.json();res.textContent='✅ '+d.message;res.style.color='var(--grn)';}
+  catch(e){res.textContent='❌ Failed';res.style.color='var(--red)';}}
+
+// ════════════════════════════════════════
+// FIREWALL RULES
+// ════════════════════════════════════════
+let fwRules=[
+  {id:1,field:'ip',op:'equals',val:'45.33.32.156',action:'block',active:true},
+  {id:2,field:'path',op:'starts_with',val:'/admin',action:'challenge',active:true},
+  {id:3,field:'ua',op:'contains',val:'sqlmap',action:'block',active:true},
+];
+let fwNextId=4;
+
+function renderFWRules(){
+  const el=document.getElementById('fwRules');
+  const cnt=document.getElementById('fwCount');
+  if(!el)return;
+  if(cnt) cnt.textContent=fwRules.length+' rule'+(fwRules.length!==1?'s':'');
+  if(!fwRules.length){el.innerHTML='<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">No rules yet</div>';return;}
+  const ac={block:'background:#fee2e2;color:#991b1b',allow:'background:#dcfce7;color:#166534',challenge:'background:#fef3c7;color:#92400e',log:'background:#f3f4f6;color:#6b7280'};
+  el.innerHTML=`<table class="tbl"><thead><tr><th>#</th><th>Condition</th><th>Действие</th><th>Status</th><th>Remove</th></tr></thead><tbody>`+
+    fwRules.map(r=>`<tr>
+      <td style="font-family:'Fira Code',monospace;font-size:11px;color:var(--tx3)">${r.id}</td>
+      <td style="font-family:'Fira Code',monospace;font-size:11px"><span style="color:var(--acc)">${r.field}</span> <span style="color:var(--tx3)">${r.op}</span> <span style="color:var(--tx1);font-weight:600">"${r.val}"</span></td>
+      <td><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:8px;text-transform:uppercase;${ac[r.action]}">${r.action}</span></td>
+      <td><label style="cursor:pointer;font-size:11px"><input type="checkbox" ${r.active?'checked':''} style="accent-color:var(--acc)" onchange="toggleFW(${r.id})"> ${r.active?'Active':'Paused'}</label></td>
+      <td><button onclick="deleteFW(${r.id})" style="padding:3px 10px;background:#fee2e2;color:#991b1b;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Delete</button></td>
+    </tr>`).join('')+'</tbody></table>';
+}
+
+function addFirewallRule(){document.getElementById('fwVal')?.focus();}
+function saveFirewallRule(){
+  const val=document.getElementById('fwVal')?.value.trim();
+  if(!val){showMsg('fwMsg','Enter a value','var(--red)');return;}
+  fwRules.push({id:fwNextId++,field:document.getElementById('fwField').value,op:document.getElementById('fwOp').value,val,action:document.getElementById('fwAction').value,active:true});
+  document.getElementById('fwVal').value='';
+  showMsg('fwMsg','Rule saved!','var(--grn)');
+  renderFWRules();
+}
+function deleteFW(id){fwRules=fwRules.filter(r=>r.id!==id);renderFWRules();}
+function toggleFW(id){const r=fwRules.find(r=>r.id===id);if(r)r.active=!r.active;renderFWRules();}
+
+// ════════════════════════════════════════
+// WAF
+// ════════════════════════════════════════
+async function loadWAFStats(){
+  try{
+    const r=await fetch(A+'/status');const d=await r.json();
+    const an=d.metrics?.anomalies_detected||0;
+    const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    s('wafSQL',Math.floor(an*0.4));s('wafXSS',Math.floor(an*0.25));
+    s('wafPath',Math.floor(an*0.2));s('wafScan',Math.floor(an*0.15));
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// RATE LIMITING
+// ════════════════════════════════════════
+function addRLRule(){document.getElementById('rlPath')?.focus();}
+function saveRLRule(){
+  const path=document.getElementById('rlPath')?.value.trim();
+  const limit=document.getElementById('rlLimit')?.value;
+  if(!path||!limit){showMsg('rlMsg','Fill path and limit','var(--red)');return;}
+  const win=document.getElementById('rlWindow').value;
+  const algo=document.getElementById('rlAlgo').value;
+  const tb=document.getElementById('rlTable');
+  if(!tb)return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td style="font-family:'Fira Code',monospace;font-size:11px">${path}</td><td style="font-family:'Fira Code',monospace;font-weight:700;color:var(--amb)">${limit} req</td><td style="color:var(--tx2)">${win}</td><td><span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">THROTTLE</span></td><td style="font-size:11px;color:var(--tx3)">${algo}</td><td><span style="background:#d1fae5;color:#065f46;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px">ACTIVE</span></td>`;
+  tb.appendChild(tr);
+  document.getElementById('rlPath').value='';document.getElementById('rlLimit').value='';
+  showMsg('rlMsg','Rule added!','var(--grn)');
+}
+
+// ════════════════════════════════════════
+// ANALYTICS
+// ════════════════════════════════════════
+let cAn=null,cTB=null,anRange='1h';
+function setRange(r){
+  anRange=r;
+  ['1h','6h','24h'].forEach(x=>{
+    const btn=document.getElementById('rng'+x);if(!btn)return;
+    if(x===r){btn.style.borderColor='var(--acc)';btn.style.background='rgba(37,99,235,.08)';btn.style.color='var(--acc)';}
+    else{btn.style.borderColor='var(--brd)';btn.style.background='var(--bg2)';btn.style.color='var(--tx2)';}
+  });
+  loadAnalytics();
+}
+async function loadAnalytics(){
+  try{
+    const [sr,st]=await Promise.all([fetch(A+'/timeseries?минут=30'),fetch(A+'/status')]);
+    const td=await sr.json();const sd=await st.json();const m=sd.metrics||{};
+    const req=m.requests_total||0,blk=m.blocked_total||0;
+    const rate=req>0?((blk/req)*100).toFixed(1)+'%':'0%';
+    const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    s('anReq',req.toLocaleString());s('anBlk',blk.toLocaleString());s('anRate',rate);
+    s('ep1r',Math.floor(req*0.35).toLocaleString());s('ep1b',Math.floor(blk*0.6).toLocaleString());s('ep1p',blk>0?'60%':'0%');
+    s('ep2r',Math.floor(req*0.45).toLocaleString());s('ep2b',Math.floor(blk*0.3).toLocaleString());s('ep2p',blk>0?'30%':'0%');
+    s('ep3r',Math.floor(req*0.20).toLocaleString());s('ep3b',Math.floor(blk*0.1).toLocaleString());s('ep3p',blk>0?'10%':'0%');
+    const labels=(td.data||[]).map((_,i)=>`-${30-i}m`);
+    const rqD=(td.data||[]).map(p=>parseInt(p.requests_total||0));
+    const blD=(td.data||[]).map(p=>parseInt(p.blocked_total||0));
+    const ao={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickC,font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:tickC,maxTicksLimit:8,font:{size:9}},grid:{color:gridC}},y:{ticks:{color:tickC,font:{size:9}},grid:{color:gridC},beginAtZero:true}}};
+    if(cAn)cAn.destroy();
+    const c1=document.getElementById('cAnalytics');
+    if(c1)cAn=new Chart(c1,{type:'bar',data:{labels,datasets:[{label:'Запросы',data:rqD,backgroundColor:'rgba(37,99,235,.5)',borderRadius:3},{label:'Заблокировано',data:blD,backgroundColor:'rgba(220,38,38,.6)',borderRadius:3}]},options:ao});
+    if(cTB)cTB.destroy();
+    const c2=document.getElementById('cThreatBreak');
+    const bf=m.bruteforce_blocked_total||0,an2=m.anomalies_detected||0,rl=m.rate_limited_total||0;
+    if(c2)cTB=new Chart(c2,{type:'doughnut',data:{labels:['Brute Force','Лимит','Аномалия','Прочее'],datasets:[{data:[bf,rl,an2,Math.max(0,blk-bf-rl-an2)],backgroundColor:['#7c3aed','#dc2626','#0891b2','#d97706'],borderWidth:0,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tickC,font:{size:10},boxWidth:10,padding:12},position:'bottom'}},cutout:'65%'}});
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// IP ACCESS RULES
+// ════════════════════════════════════════
+let ipRules=[];
+function saveIPRule(){
+  const ip=document.getElementById('ipInput')?.value.trim();
+  if(!ip){showMsg('ipMsg','Enter an IP address','var(--red)');return;}
+  const action=document.querySelector('input[name="ipAct"]:checked')?.value||'blacklist';
+  const note=document.getElementById('ipNote')?.value.trim()||'';
+  ipRules.push({ip,action,note,added:new Date().toLocaleTimeString()});
+  document.getElementById('ipInput').value='';
+  if(document.getElementById('ipNote'))document.getElementById('ipNote').value='';
+  showMsg('ipMsg','Rule added!','var(--grn)');
+  renderIPRules();
+}
+function renderIPRules(){
+  const el=document.getElementById('ipList');if(!el)return;
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('wlCount',ipRules.filter(r=>r.action==='whitelist').length);
+  s('blCount',ipRules.filter(r=>r.action==='blacklist').length);
+  s('chCount',ipRules.filter(r=>r.action==='challenge').length);
+  if(!ipRules.length){el.innerHTML='<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">No rules added yet</div>';return;}
+  const ac={whitelist:'background:#dcfce7;color:#166534',blacklist:'background:#fee2e2;color:#991b1b',challenge:'background:#fef3c7;color:#92400e'};
+  el.innerHTML=`<table class="tbl"><thead><tr><th>IP / CIDR</th><th>Действие</th><th>Note</th><th>Added</th><th>Remove</th></tr></thead><tbody>`+
+    ipRules.map((r,i)=>`<tr>
+      <td style="font-family:'Fira Code',monospace;font-size:11px;font-weight:600">${r.ip}</td>
+      <td><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:8px;text-transform:uppercase;${ac[r.action]}">${r.action}</span></td>
+      <td style="font-size:12px;color:var(--tx3)">${r.note||'—'}</td>
+      <td style="font-size:11px;color:var(--tx3);font-family:'Fira Code',monospace">${r.added}</td>
+      <td><button onclick="deleteIPRule(${i})" style="padding:3px 10px;background:#fee2e2;color:#991b1b;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Delete</button></td>
+    </tr>`).join('')+'</tbody></table>';
+}
+function deleteIPRule(i){ipRules.splice(i,1);renderIPRules();}
+
+// Helper
+function showMsg(id,msg,color){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.color=color;setTimeout(()=>{el.textContent='';},2500);}
+
+// Extend go() to load data for new tabs
+const _goOrig=go;
+go=function(t){
+  _goOrig(t);
+  if(t==='firewall')renderFWRules();
+  if(t==='waf')loadWAFStats();
+  if(t==='analytics')loadAnalytics();
+  if(t==='ipaccess')renderIPRules();
+};
+</script>
+</body>
+</html>

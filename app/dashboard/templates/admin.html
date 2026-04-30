@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptive Shield — Управление пользователями</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f4f9;--bg1:#ffffff;--bg2:#f8fafc;
+  --tx1:#0d1424;--tx2:#3d4a68;--tx3:#8896b3;
+  --acc:#2563eb;--grn:#10b981;--red:#ef4444;--amb:#f59e0b;
+  --brd:#e2e8f4;--r:12px;
+  --shadow:0 1px 3px rgba(13,20,36,.05),0 4px 16px rgba(13,20,36,.04);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx1);min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--bg1);border-bottom:1px solid var(--brd);
+  height:56px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 28px;
+  box-shadow:var(--shadow);position:sticky;top:0;z-index:10;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.back-btn{
+  display:flex;align-items:center;gap:6px;
+  color:var(--tx2);font-size:13px;font-weight:500;
+  text-decoration:none;padding:6px 12px;
+  border-radius:8px;border:1px solid var(--brd);
+  background:var(--bg2);transition:all .2s;
+}
+.back-btn:hover{border-color:var(--acc);color:var(--acc)}
+.page-title{font-size:16px;font-weight:700;color:var(--tx1)}
+.admin-badge{
+  padding:3px 10px;background:rgba(37,99,235,.1);
+  color:var(--acc);font-size:11px;font-weight:700;
+  border-radius:100px;letter-spacing:.3px;
+}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.user-info{font-size:13px;color:var(--tx2);font-weight:500}
+.logout-btn{
+  padding:7px 14px;border-radius:8px;
+  border:1px solid var(--brd);background:var(--bg2);
+  font-size:13px;font-weight:500;color:var(--tx2);
+  cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ── LAYOUT ── */
+.content{max-width:1000px;margin:0 auto;padding:32px 24px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{
+  background:var(--bg1);border:1px solid var(--brd);
+  border-radius:var(--r);padding:20px 22px;
+  box-shadow:var(--shadow);
+}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.stat-lbl{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
+
+/* ── CARD ── */
+.card{
+  background:var(--bg1);border:1px solid var(--brd);
+  border-radius:var(--r);box-shadow:var(--shadow);
+  overflow:hidden;margin-bottom:20px;
+}
+.card-header{
+  padding:18px 22px;border-bottom:1px solid var(--brd);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:13px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
+
+/* ── ADD USER FORM ── */
+.add-form{
+  padding:20px 22px;
+  display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;
+}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+.form-label{font-size:12px;font-weight:600;color:var(--tx2)}
+.form-input{
+  padding:9px 12px;border:1px solid var(--brd);
+  border-radius:8px;font-size:13px;font-family:inherit;
+  color:var(--tx1);background:var(--bg2);
+  transition:border-color .2s;outline:none;
+}
+.form-input:focus{border-color:var(--acc);background:#fff}
+.form-select{
+  padding:9px 12px;border:1px solid var(--brd);
+  border-radius:8px;font-size:13px;font-family:inherit;
+  color:var(--tx1);background:var(--bg2);
+  cursor:pointer;outline:none;transition:border-color .2s;
+}
+.form-select:focus{border-color:var(--acc)}
+.btn-add{
+  padding:9px 20px;background:var(--acc);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .2s;
+  white-space:nowrap;
+}
+.btn-add:hover{background:#1d4ed8;transform:translateY(-1px)}
+
+/* ── TABLE ── */
+.users-table{width:100%;border-collapse:collapse}
+.users-table th{
+  padding:11px 16px;text-align:left;
+  font-size:10px;font-weight:700;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.8px;
+  border-bottom:1px solid var(--brd);background:var(--bg2);
+}
+.users-table td{
+  padding:14px 16px;border-bottom:1px solid var(--brd);
+  font-size:13px;
+}
+.users-table tr:last-child td{border-bottom:none}
+.users-table tr:hover td{background:var(--bg2)}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--acc);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;margin-right:10px;
+  flex-shrink:0;
+}
+.user-avatar.green{background:var(--grn)}
+.user-avatar.amber{background:var(--amb)}
+.user-cell{display:flex;align-items:center}
+.user-name{font-weight:600;color:var(--tx1)}
+.user-sub{font-size:11px;color:var(--tx3);margin-top:1px;font-family:'Fira Code',monospace}
+
+/* ── BADGES ── */
+.role-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:100px;
+  font-size:11px;font-weight:700;letter-spacing:.3px;
+}
+.role-admin{background:rgba(37,99,235,.1);color:var(--acc)}
+.role-user{background:rgba(136,150,179,.12);color:var(--tx2)}
+
+/* ── ACTION BUTTONS ── */
+.action-wrap{display:flex;align-items:center;gap:8px}
+.btn-promote{
+  padding:6px 12px;border-radius:7px;
+  border:1px solid rgba(16,185,129,.3);
+  background:rgba(16,185,129,.08);color:var(--grn);
+  font-size:12px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:all .2s;
+}
+.btn-promote:hover{background:rgba(16,185,129,.15);border-color:var(--grn)}
+.btn-demote{
+  padding:6px 12px;border-radius:7px;
+  border:1px solid rgba(245,158,11,.3);
+  background:rgba(245,158,11,.08);color:var(--amb);
+  font-size:12px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:all .2s;
+}
+.btn-demote:hover{background:rgba(245,158,11,.15);border-color:var(--amb)}
+.btn-delete{
+  padding:6px 10px;border-radius:7px;
+  border:1px solid rgba(239,68,68,.2);
+  background:transparent;color:var(--tx3);
+  font-size:12px;cursor:pointer;
+  font-family:inherit;transition:all .2s;
+}
+.btn-delete:hover{background:rgba(239,68,68,.08);border-color:var(--red);color:var(--red)}
+.btn-self{opacity:.35;cursor:not-allowed!important}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--tx1);color:#fff;
+  padding:12px 20px;border-radius:10px;
+  font-size:13px;font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+  transform:translateY(80px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  z-index:100;
+}
+.toast.show{transform:none;opacity:1}
+.toast.success{background:var(--grn)}
+.toast.error{background:var(--red)}
+
+/* ── EMPTY / LOADING ── */
+.empty{padding:48px;text-align:center;color:var(--tx3);font-size:13px}
+.spinner{
+  width:20px;height:20px;border:2px solid var(--brd);
+  border-top-color:var(--acc);border-radius:50%;
+  animation:spin .6s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ACCESS DENIED ── */
+.access-denied{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:60vh;text-align:center;gap:16px;
+}
+.access-denied .icon{font-size:48px}
+.access-denied h2{font-size:22px;font-weight:700}
+.access-denied p{color:var(--tx2);max-width:360px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="/dashboard" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Дашборд
+    </a>
+    <span class="page-title">Управление пользователями</span>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="topbar-right">
+    <span class="user-info" id="currentUser">—</span>
+    <button class="logout-btn" onclick="logout()">Выйти</button>
+  </div>
+</div>
+
+<div class="content" id="mainContent">
+  <div class="empty"><span class="spinner"></span></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const A = '/dashboard/api';
+
+// ── AUTH CHECK ──
+async function init(){
+  try{
+    const r = await fetch(A+'/auth/check');
+    const d = await r.json();
+    if(!d.authenticated || !d.is_admin){
+      showAccessDenied();
+      return;
+    }
+    document.getElementById('currentUser').textContent = d.username || 'admin';
+    loadPage();
+  }catch(e){
+    showAccessDenied();
+  }
+}
+
+function showAccessDenied(){
+  document.getElementById('mainContent').innerHTML = `
+    <div class="access-denied">
+      <div class="icon">🔒</div>
+      <h2>Доступ запрещён</h2>
+      <p>Эта страница доступна только администраторам. Пожалуйста, войдите с правами admin.</p>
+      <a href="/dashboard" style="padding:10px 24px;background:var(--acc);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Вернуться на дашборд</a>
+    </div>`;
+}
+
+let users = [];
+let currentUser = '';
+
+async function loadPage(){
+  const [usersRes, authRes] = await Promise.all([
+    fetch(A+'/users'),
+    fetch(A+'/auth/check')
+  ]);
+  const usersData = await usersRes.json();
+  const authData = await authRes.json();
+  users = usersData.users || [];
+  currentUser = authData.username || '';
+  render();
+}
+
+function render(){
+  const total = users.length;
+  const admins = users.filter(u=>u.role==='admin').length;
+  const regular = users.filter(u=>u.role==='user').length;
+
+  const avatarColor = (u) => {
+    if(u.role==='admin') return '';
+    const colors = ['green','amber',''];
+    return colors[u.username.charCodeAt(0)%3];
+  };
+
+  const initials = (u) => (u.name||u.username).substring(0,2).toUpperCase();
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--tx1)">${total}</div>
+        <div class="stat-lbl">Всего пользователей</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--acc)">${admins}</div>
+        <div class="stat-lbl">Администраторов</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:var(--grn)">${regular}</div>
+        <div class="stat-lbl">Обычных пользователей</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Добавить пользователя</span>
+      </div>
+      <div class="add-form">
+        <div class="form-group">
+          <label class="form-label">Логин</label>
+          <input class="form-input" id="newUsername" placeholder="username" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль</label>
+          <input class="form-input" id="newPassword" type="password" placeholder="••••••••">
+        </div>
+        <div class="form-group" style="max-width:140px">
+          <label class="form-label">Роль</label>
+          <select class="form-select" id="newRole">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button class="btn-add" onclick="addUser()">+ Добавить</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Пользователи системы</span>
+        <span style="font-size:12px;color:var(--tx3)">${total} записей</span>
+      </div>
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Пользователь</th>
+            <th>Роль</th>
+            <th>Дата создания</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => {
+            const isSelf = u.username === currentUser;
+            const isAdmin = u.role === 'admin';
+            return `
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar ${avatarColor(u)}">${initials(u)}</div>
+                  <div>
+                    <div class="user-name">${u.name || u.username}</div>
+                    <div class="user-sub">${u.username}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="role-badge ${isAdmin ? 'role-admin' : 'role-user'}">
+                  ${isAdmin ? '⬡ ADMIN' : '○ USER'}
+                </span>
+              </td>
+              <td style="color:var(--tx3);font-size:12px;font-family:'Fira Code',monospace">
+                ${u.created_at || '—'}
+              </td>
+              <td>
+                <div class="action-wrap">
+                  ${isSelf ? `
+                    <span style="font-size:12px;color:var(--tx3);font-style:italic">это вы</span>
+                  ` : isAdmin ? `
+                    <button class="btn-demote" onclick="changeRole('${u.username}','user')">↓ Понизить</button>
+                    <button class="btn-delete" onclick="deleteUser('${u.username}')">✕</button>
+                  ` : `
+                    <button class="btn-promote" onclick="changeRole('${u.username}','admin')">↑ Повысить до Admin</button>
+                    <button class="btn-delete" onclick="deleteUser('${u.username}')">✕</button>
+                  `}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ── ACTIONS ──
+async function changeRole(username, role){
+  const action = role === 'admin' ? 'повысить до admin' : 'понизить до user';
+  if(!confirm(`Вы уверены что хотите ${action} пользователя "${username}"?`)) return;
+  try{
+    const r = await fetch(A+'/users/'+username+'/role',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role})
+    });
+    const d = await r.json();
+    if(r.ok){
+      showToast(role==='admin' ? `✓ ${username} повышен до Admin` : `✓ ${username} понижен до User`, 'success');
+      // Update local state
+      const u = users.find(u=>u.username===username);
+      if(u) u.role = role;
+      render();
+    } else {
+      showToast('✗ ' + (d.error||'Ошибка'), 'error');
+    }
+  }catch(e){
+    showToast('✗ Ошибка соединения', 'error');
+  }
+}
+
+async function deleteUser(username){
+  if(!confirm(`Удалить пользователя "${username}"? Это действие необратимо.`)) return;
+  try{
+    const r = await fetch(A+'/users/'+username,{method:'DELETE'});
+    const d = await r.json();
+    if(r.ok){
+      showToast(`✓ Пользователь ${username} удалён`, 'success');
+      users = users.filter(u=>u.username!==username);
+      render();
+    } else {
+      showToast('✗ ' + (d.error||'Ошибка'), 'error');
+    }
+  }catch(e){
+    showToast('✗ Ошибка соединения', 'error');
+  }
+}
+
+async function addUser(){
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value;
+  const role = document.getElementById('newRole').value;
+  if(!username || !password){
+    showToast('✗ Заполните логин и пароль', 'error');
+    return;
+  }
+  try{
+    const r = await fetch('/api/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const d = await r.json();
+    if(r.ok){
+      // If role is admin - promote immediately
+      if(role === 'admin'){
+        await fetch(A+'/users/'+username+'/role',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({role:'admin'})
+        });
+      }
+      showToast(`✓ Пользователь ${username} создан`, 'success');
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newPassword').value = '';
+      await loadPage();
+    } else {
+      showToast('✗ ' + (d.detail||d.error||'Ошибка'), 'error');
+    }
+  }catch(e){
+    showToast('✗ Ошибка соединения', 'error');
+  }
+}
+
+function logout(){
+  fetch('/api/logout',{method:'POST'}).then(()=>{
+    window.location.href = '/';
+  });
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+init();
+</script>
+</body>
+</html>

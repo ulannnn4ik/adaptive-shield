@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptive Shield — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f6f6f6;--white:#fff;--ink:#1d1d1f;--mid:#6e6e73;
+  --brd:#d2d2d7;--acc:#f6821f;
+  --grn:#16a34a;--red:#dc2626;--amb:#d97706;--blue:#1a56db;--pur:#7c3aed;
+}
+body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;align-items:center;padding:0 24px;justify-content:space-between;position:sticky;top:0;z-index:50}
+.nav-left{display:flex;align-items:center;gap:20px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-mark{width:28px;height:28px;background:var(--acc);border-radius:4px;display:grid;place-items:center}
+.logo-mark svg{width:15px;height:15px;fill:#fff}
+.logo-name{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-user{font-size:12px;color:var(--mid)}
+.nav-user strong{color:var(--ink)}
+.role-pill{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+.role-admin{background:#fff7ed;color:var(--acc);border:1px solid #fed7aa}
+.role-user{background:#f3f4f6;color:#374151;border:1px solid var(--brd)}
+.btn-out{font-size:12px;font-weight:600;color:var(--mid);padding:5px 12px;border:1px solid var(--brd);border-radius:6px;background:#fff;cursor:pointer;font-family:'Epilogue',sans-serif;transition:all .15s}
+.btn-out:hover{color:var(--ink);border-color:var(--ink)}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 54px)}
+.sb{background:#fff;border-right:1px solid var(--brd);padding:16px 0;display:flex;flex-direction:column}
+.sb-sect{font-size:10px;font-weight:700;color:#b0b0b8;text-transform:uppercase;letter-spacing:1px;padding:14px 18px 5px}
+.sb-item{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;font-size:13px;font-weight:500;color:var(--mid);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.sb-item:hover{background:var(--bg);color:var(--ink)}
+.sb-item.on{background:#fff7ed;color:var(--acc);font-weight:700;border-left-color:var(--acc)}
+.sb-item.locked{opacity:.45;cursor:not-allowed}
+.sb-item.locked:hover{background:transparent;color:var(--mid)}
+.sb-bottom{margin-top:auto;padding:14px 18px;border-top:1px solid var(--brd)}
+.sb-who-name{font-size:13px;font-weight:700;color:var(--ink)}
+.sb-who-desc{font-size:11px;color:var(--mid);margin-top:2px}
+.main{padding:28px 32px;overflow-y:auto}
+.tab{display:none}.tab.on{display:block}
+.pg-title{font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--ink);margin-bottom:4px}
+.pg-sub{font-size:13px;color:var(--mid);margin-bottom:22px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.cd{background:#fff;border:1px solid var(--brd);border-radius:10px;padding:18px}
+.cd-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cd-t{font-size:10px;font-weight:700;color:#b0b0b8;text-transform:uppercase;letter-spacing:.6px}
+.cd-a{font-size:12px;color:var(--acc);cursor:pointer;font-weight:600}
+.mc-val{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.mc-sub{font-size:11px;color:var(--mid)}
+.mc-bar{height:3px;border-radius:2px;background:#f3f4f6;margin-top:10px;overflow:hidden}
+.mc-fill{height:100%;border-radius:2px}
+.c-blue .mc-val{color:var(--blue)}.c-blue .mc-fill{background:var(--blue)}
+.c-red  .mc-val{color:var(--red)} .c-red  .mc-fill{background:var(--red)}
+.c-pur  .mc-val{color:var(--pur)} .c-pur  .mc-fill{background:var(--pur)}
+.c-acc  .mc-val{color:var(--acc)} .c-acc  .mc-fill{background:var(--acc)}
+.ev{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.ev:last-child{border:none}
+.ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ev-time{font-family:'JetBrains Mono',monospace;color:#b0b0b8;min-width:65px;font-size:10px}
+.ev-ip{font-family:'JetBrains Mono',monospace;color:var(--blue);min-width:105px;font-weight:600;font-size:11px}
+.ev-msg{flex:1;color:var(--mid)}
+.act{font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px}
+.act-ban{background:#fee2e2;color:#991b1b}
+.act-ok{background:#dcfce7;color:#166534}
+.act-lim{background:#fef3c7;color:#92400e}
+.act-pur{background:#ede9fe;color:#5b21b6}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:9px 12px;background:var(--bg);font-size:10px;font-weight:700;color:#b0b0b8;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--brd)}
+.tbl td{padding:10px 12px;border-bottom:1px solid #f3f4f6}
+.tbl tr:hover td{background:#fafafa}
+.sec-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #f3f4f6}
+.sec-row:last-child{border:none}
+.sec-label{font-size:13px;font-weight:600}
+.sec-desc{font-size:11px;color:var(--mid);margin-top:2px}
+.tag-on{background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:3px 10px;border-radius:8px;border:1px solid #bbf7d0}
+/* Profile card */
+.profile-card{background:var(--ink);border-radius:12px;padding:22px 24px;color:#fff;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.pc-left{display:flex;align-items:center;gap:14px}
+.pc-avatar{width:42px;height:42px;border-radius:10px;background:var(--acc);display:grid;place-items:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.pc-name{font-size:16px;font-weight:700;color:#fff}
+.pc-role{font-size:11px;color:rgba(255,255,255,.5);margin-top:3px}
+.pc-right{display:flex;gap:24px}
+.pc-stat{text-align:center}
+.pc-stat-n{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff}
+.pc-stat-l{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+/* Resource card */
+.res-card{background:#fff;border:1px solid var(--brd);border-radius:10px;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.res-left{display:flex;align-items:center;gap:12px}
+.res-icon{width:34px;height:34px;border-radius:8px;background:var(--bg);border:1px solid var(--brd);display:grid;place-items:center;flex-shrink:0}
+.res-icon svg{width:16px;height:16px;stroke:var(--mid);fill:none;stroke-width:2;stroke-linecap:round}
+.res-name{font-size:13px;font-weight:700}
+.res-url{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mid);margin-top:2px}
+.res-right{display:flex;align-items:center;gap:14px}
+.res-stat{text-align:right}
+.res-stat-n{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.res-stat-l{font-size:10px;color:var(--mid)}
+.st-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);box-shadow:0 0 5px rgba(22,163,74,.4)}
+/* Admin */
+.admin-info{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:11px 15px;font-size:13px;color:#92400e;margin-bottom:16px;display:flex;gap:9px;align-items:center}
+.admin-info svg{flex-shrink:0;stroke:#d97706;fill:none;stroke-width:2;stroke-linecap:round}
+.btn-reset{padding:5px 12px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:#dcfce7;color:#166534;font-family:'Epilogue',sans-serif;transition:all .15s}
+.btn-reset:hover{background:#bbf7d0}
+/* Denied */
+.denied{background:#fff;border:1px solid var(--brd);border-radius:12px;padding:52px 40px;text-align:center;max-width:460px;margin:40px auto}
+.denied-icon{width:52px;height:52px;background:#fee2e2;border-radius:12px;margin:0 auto 16px;display:grid;place-items:center}
+.denied-icon svg{width:24px;height:24px;stroke:#dc2626;fill:none;stroke-width:2;stroke-linecap:round}
+.denied h3{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px}
+.denied p{font-size:13px;color:var(--mid);line-height:1.6;margin-bottom:18px}
+.denied-badge{display:inline-block;background:#fee2e2;border:1px solid #fecaca;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#991b1b;margin-bottom:16px}
+.denied-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:14px;text-align:left}
+.denied-table td{padding:7px 10px;border-bottom:1px solid #f3f4f6}
+.denied-table tr:last-child td{border:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12 3L4 7v5c0 4.55 3.4 8.81 8 9.93C17.6 20.81 21 16.55 21 12V7l-9-4z" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/><path d="M12 7.5L7.5 10v3c0 2.73 2.04 5.29 5 5.96 2.96-.67 5-3.23 5-5.96v-3L12 7.5z" fill="white"/></svg></div>
+      <span class="logo-name">Adaptive Shield</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">Signed in as <strong id="navUser">—</strong></span>
+    <span class="role-pill" id="navRole">USER</span>
+    <button class="btn-out" onclick="logout()">Выйти</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="sb">
+    <div class="sb-sect">Monitor</div>
+    <div class="sb-item on" data-tab="overview">Обзор</div>
+    <div class="sb-item" data-tab="resources">Защищённые ресурсы</div>
+    <div class="sb-item" data-tab="events">События безопасности</div>
+    <div class="sb-sect">Protection</div>
+    <div class="sb-item" data-tab="security">Статус защиты</div>
+    <div class="sb-item" id="sbIPs" data-tab="ips">
+      <span>Заблокированные IP</span><span id="sbIPsLock" style="font-size:11px;color:#b0b0b8">🔒</span>
+    </div>
+    <div class="sb-sect">Admin</div>
+    <div class="sb-item" id="sbUsers" data-tab="users">
+      <span>Управление пользователями</span><span id="sbUsersLock" style="font-size:11px;color:#b0b0b8">🔒</span>
+    </div>
+    <div class="sb-item" id="sbShield" data-tab="shield">
+      <span>Мониторинг Shield</span><span id="sbShieldLock" style="font-size:11px;color:#b0b0b8">🔒</span>
+    </div>
+    
+  </div>
+
+  <div class="main">
+    <!-- OVERVIEW -->
+    <div class="tab on" id="t-overview">
+      <div class="profile-card">
+        <div class="pc-left">
+          <div class="pc-avatar" id="pcInit">U</div>
+          <div>
+            <div class="pc-name" id="pcName">—</div>
+            <div class="pc-role" id="pcRole">—</div>
+          </div>
+        </div>
+        <div class="pc-right">
+          <div class="pc-stat"><div class="pc-stat-n" id="pcReq">—</div><div class="pc-stat-l">Запросы</div></div>
+          <div class="pc-stat"><div class="pc-stat-n" id="pcBlk">—</div><div class="pc-stat-l">Blocked</div></div>
+          <div class="pc-stat"><div class="pc-stat-n" id="pcRPS">—</div><div class="pc-stat-l">RPS</div></div>
+        </div>
+      </div>
+      <div class="g4">
+        <div class="cd c-blue"><div class="cd-t">Запросы</div><div class="mc-val" id="mReq">—</div><div class="mc-sub">Всего обработано</div><div class="mc-bar"><div class="mc-fill" style="width:70%"></div></div></div>
+        <div class="cd c-red"><div class="cd-t">Blocked</div><div class="mc-val" id="mBlk">—</div><div class="mc-sub">Угроз остановлено</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
+        <div class="cd c-pur"><div class="cd-t">Brute Force</div><div class="mc-val" id="mBF">—</div><div class="mc-sub">Атаки авторизации</div><div class="mc-bar"><div class="mc-fill" style="width:20%"></div></div></div>
+        <div class="cd c-acc"><div class="cd-t">Req/sec</div><div class="mc-val" id="mRPS">—</div><div class="mc-sub">Текущая скорость</div><div class="mc-bar"><div class="mc-fill" style="width:30%"></div></div></div>
+      </div>
+      <div class="g2">
+        <div class="cd"><div class="cd-hd"><span class="cd-t">Recent Events</span><span class="cd-a" onclick="go('events')">Все →</span></div><div id="ovEv"><div style="color:var(--mid);font-size:13px">Загрузка...</div></div></div>
+        <div class="cd"><div class="cd-hd"><span class="cd-t">Active Protection</span></div>
+          <div class="sec-row"><div><div class="sec-label">Ограничение запросов</div><div class="sec-desc">Token Bucket + Sliding Window</div></div><span class="tag-on">ON</span></div>
+          <div class="sec-row"><div><div class="sec-label">Защита от Brute Force</div><div class="sec-desc">Прогрессивная блокировка активна</div></div><span class="tag-on">ON</span></div>
+          <div class="sec-row"><div><div class="sec-label">Защита от DDoS</div><div class="sec-desc">EMA анализ baseline</div></div><span class="tag-on">ON</span></div>
+          <div class="sec-row"><div><div class="sec-label">IP Репутация</div><div class="sec-desc">Блокировка по score</div></div><span class="tag-on">ON</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="tab" id="t-resources">
+      <div class="pg-title">Защищённые ресурсы</div>
+      <div class="pg-sub">Web resources under Adaptive Shield protection</div>
+      <div class="res-card">
+        <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <div><div class="res-name">Main Web Resource</div><div class="res-url">shield.local:8000/site</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" id="rReq">—</div><div class="res-stat-l">requests</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--red)" id="rBlk">—</div><div class="res-stat-l">blocked</div></div><div class="st-dot"></div></div>
+      </div>
+      <div class="res-card">
+        <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div><div class="res-name">Login Endpoint</div><div class="res-url">shield.local:8000/site/login</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--pur)" id="rBF">—</div><div class="res-stat-l">brute force</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)">5/min</div><div class="res-stat-l">rate limit</div></div><div class="st-dot"></div></div>
+      </div>
+      <div class="res-card">
+        <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div><div class="res-name">API Endpoints</div><div class="res-url">shield.local:8000/api/*</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)" id="rLim">—</div><div class="res-stat-l">rate limited</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--grn)">100/min</div><div class="res-stat-l">limit</div></div><div class="st-dot"></div></div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="tab" id="t-events">
+      <div class="pg-title">События безопасности</div>
+      <div class="pg-sub">Real-time log — auto-refresh every 3s</div>
+      <div class="cd"><div id="evList"><div style="color:var(--mid);font-size:13px">Загрузка...</div></div></div>
+    </div>
+
+    <!-- SECURITY -->
+    <div class="tab" id="t-security">
+      <div class="pg-title">Статус защиты</div>
+      <div class="pg-sub">Все активные механизмы защиты</div>
+      <div class="cd">
+        <div class="sec-row"><div><div class="sec-label">DDoS — EMA Rate Limiting</div><div class="sec-desc">Baseline analysis · burst multiplier 3.0×</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Brute Force — Progressive Lockout</div><div class="sec-desc">5 fails → 15 min · 10 → 30 min · 15 → 60 min</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">IP Reputation Scoring</div><div class="sec-desc">Decay 0.95/min · ban at 100 · challenge at 50</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Anomaly Detection</div><div class="sec-desc">Z-score 2.5σ threshold</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Client Fingerprinting</div><div class="sec-desc">TLS + headers + timing</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Credential Stuffing Detection</div><div class="sec-desc">3+ usernames from one IP</div></div><span class="tag-on">АКТИВНО</span></div>
+      </div>
+    </div>
+
+    <!-- BLOCKED IPs — content injected by JS -->
+    <div class="tab" id="t-ips"></div>
+    <!-- USER MANAGEMENT — content injected by JS -->
+    <div class="tab" id="t-users"></div>
+    <!-- LIVE SHIELD — content injected by JS -->
+    <div class="tab" id="t-shield"></div>
+  </div>
+</div>
+
+<script>
+const API='http://shield.local:8000';
+
+// Clean up any corrupted localStorage data
+const user = localStorage.getItem('as_user');
+const role = localStorage.getItem('as_role');
+const token = localStorage.getItem('as_token');
+
+// Redirect to login if not properly authenticated
+if(!user || !role || !token){
+  localStorage.clear();
+  window.location.href='login.html';
+}
+
+const isAdmin = role === 'admin';
+
+// Safe identity — fallback to defaults if any element missing
+function setEl(id, val){
+  const el = document.getElementById(id);
+  if(el) el.textContent = val || '';
+}
+
+setEl('navUser', user);
+document.getElementById('navRole').textContent = role.toUpperCase();
+document.getElementById('navRole').className = 'role-pill ' + (isAdmin ? 'role-admin' : 'role-user');
+setEl('pcInit', user ? user[0].toUpperCase() : '?');
+setEl('pcName', user);
+setEl('pcRole', isAdmin ? 'Администратор · Полный доступ' : 'Пользователь · Только чтение');
+
+// Unlock or lock admin items
+const adminItems=['sbIPs','sbUsers','sbShield'];
+if(isAdmin){
+  adminItems.forEach(id=>{
+    const el=document.getElementById(id);
+    const lock=el.querySelector('[id$="Lock"]');
+    if(lock) lock.remove();
+    el.classList.remove('locked');
+  });
+  buildIPsTab();
+  buildUsersTab();
+  buildShieldTab();
+} else {
+  adminItems.forEach(id=>document.getElementById(id).classList.add('locked'));
+}
+
+// Navigation
+document.querySelectorAll('.sb-item').forEach(n=>n.addEventListener('click',function(){
+  if(this.classList.contains('locked')){ showDenied(this.dataset.tab); return; }
+  go(this.dataset.tab);
+}));
+
+function go(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('[id^="t-denied"]').forEach(x=>x.remove());
+  const el=document.getElementById('t-'+t);
+  if(el) el.classList.add('on');
+  const sb=document.querySelector(`[data-tab="${t}"]`);
+  if(sb&&!sb.classList.contains('locked')) sb.classList.add('on');
+  if(t==='overview'||t==='resources') loadStats();
+  if(t==='overview'||t==='events') loadEvents();
+  if(t==='ips'&&isAdmin) loadIPs();
+  if(t==='shield'&&isAdmin) loadLive();
+}
+
+function showDenied(page){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('[id^="t-denied"]').forEach(x=>x.remove());
+  const names={ips:'Blocked IPs',users:'User Management',shield:'Live Shield Monitor'};
+  const d=document.createElement('div');
+  d.className='tab on'; d.id='t-denied-'+page;
+  d.innerHTML=`<div class="denied">
+    <div class="denied-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div class="denied-badge">Your role: ${role.toUpperCase()}</div>
+    <h3>Admin access required</h3>
+    <p><strong>${names[page]}</strong> is only available to administrators.<br>You are logged in as a standard user.</p>
+    <table class="denied-table">
+      <tr><td style="color:var(--mid)">Your role</td><td><strong>user</strong> — read only</td></tr>
+      <tr><td style="color:var(--mid)">Required role</td><td><strong style="color:var(--acc)">admin</strong> — full access</td></tr>
+      <tr><td style="color:var(--mid)">What you can access</td><td>Overview, Resources, Events, Protection Status</td></tr>
+    </table>
+  </div>`;
+  document.querySelector('.main').appendChild(d);
+}
+
+// Data helpers
+function evHTML(e){
+  const colors={blocked:'#dc2626',rate_limited:'#d97706',brute_force:'#7c3aed',login:'#16a34a',anomaly:'#1a56db'};
+  const c=colors[e.type]||'#b0b0b8';
+  const t=e.ts?new Date(e.ts).toLocaleTimeString():'';
+  const ac=e.type==='blocked'||e.type==='brute_force'?'act-ban':e.type==='rate_limited'?'act-lim':e.type==='anomaly'?'act-pur':'act-ok';
+  return `<div class="ev"><div class="ev-dot" style="background:${c}"></div><span class="ev-time">${t}</span><span class="ev-ip">${e.ip}</span><span class="ev-msg">${e.type}</span><span class="act ${ac}">${e.action||e.type}</span></div>`;
+}
+
+async function loadStats(){
+  try{
+    const r=await fetch(API+'/dashboard/api/status');
+    const d=await r.json(); const m=d.metrics||{};
+    const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    s('mReq',(m.requests_total||0).toLocaleString());
+    s('mBlk',(m.blocked_total||0).toLocaleString());
+    s('mBF',(m.bruteforce_blocked_total||0).toLocaleString());
+    s('mRPS',(d.rate_limiter?.current_rps||0).toFixed(1));
+    s('pcReq',(m.requests_total||0).toLocaleString());
+    s('pcBlk',(m.blocked_total||0).toLocaleString());
+    s('pcRPS',(d.rate_limiter?.current_rps||0).toFixed(1));
+    s('rReq',(m.requests_total||0).toLocaleString());
+    s('rBlk',(m.blocked_total||0).toLocaleString());
+    s('rBF',(m.bruteforce_blocked_total||0).toLocaleString());
+    s('rLim',(m.rate_limited_total||0).toLocaleString());
+  }catch(e){}
+}
+
+async function loadEvents(){
+  try{
+    const r=await fetch(API+'/dashboard/api/events?count=60');
+    const d=await r.json(); const ev=d.events||[];
+    const none='<div style="color:var(--mid);font-size:13px">No events yet</div>';
+    const ov=document.getElementById('ovEv');
+    const el=document.getElementById('evList');
+    if(ov) ov.innerHTML=ev.slice(0,5).map(evHTML).join('')||none;
+    if(el) el.innerHTML=ev.map(evHTML).join('')||none;
+  }catch(e){}
+}
+
+// ── ADMIN TABS ──
+function buildIPsTab(){
+  document.getElementById('t-ips').innerHTML=`
+    <div class="pg-title">Заблокированные IP</div>
+    <div class="pg-sub">IP addresses flagged or banned by Adaptive Shield</div>
+    <div class="admin-info"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin only — you can reset reputation scores</div>
+    <div class="cd"><table class="tbl">
+      <thead><tr><th>IP Address</th><th>Score</th><th>Action</th><th>Violations</th><th>Last seen</th><th>Manage</th></tr></thead>
+      <tbody id="ipTb"><tr><td colspan="6" style="text-align:center;color:var(--mid);padding:20px">Загрузка...</td></tr></tbody>
+    </table></div>`;
+}
+
+async function loadIPs(){
+  try{
+    const r=await fetch(API+'/dashboard/api/reputation');
+    const d=await r.json(); const tb=document.getElementById('ipTb');
+    if(!tb) return;
+    if(!d.flagged_ips?.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--mid);padding:20px">No flagged IPs</td></tr>';return;}
+    tb.innerHTML=d.flagged_ips.slice(0,30).map(ip=>{
+      const c=ip.score>=100?'#dc2626':ip.score>=50?'#d97706':'#6e6e73';
+      return `<tr>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">${ip.ip}</td>
+        <td style="font-weight:700;color:${c};font-family:'JetBrains Mono',monospace">${(ip.score||0).toFixed(1)}</td>
+        <td><span class="act ${ip.action==='ban'?'act-ban':ip.action==='challenge'?'act-lim':'act-ok'}">${ip.action}</span></td>
+        <td style="color:var(--mid)">${ip.violation_count||0}</td>
+        <td style="color:var(--mid);font-size:11px">${ip.last_violation||'—'}</td>
+        <td><button class="btn-reset" onclick="resetIP('${ip.ip}')">Reset</button></td>
+      </tr>`;
+    }).join('');
+  }catch(e){}
+}
+
+async function resetIP(ip){
+  try{
+    await fetch(API+'/dashboard/api/reset-ip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ip})});
+    loadIPs();
+  }catch(e){alert('Reset failed — check API');}
+}
+
+function buildUsersTab(){
+  document.getElementById('t-users').innerHTML=`
+    <div class="pg-title">Управление пользователями</div>
+    <div class="pg-sub">Только для администратора — управление аккаунтами и ролями</div>
+
+    <div class="cd" style="margin-bottom:16px">
+      <div class="cd-hd"><span class="cd-t">Создать пользователя</span></div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <input id="regUser" placeholder="Логин (мин. 3 символа)" style="flex:1;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:13px;outline:none;min-width:140px">
+        <input id="regPass" type="password" placeholder="Пароль (мин. 6 символов)" style="flex:1;padding:9px 12px;background:var(--bg2);border:1.5px solid var(--brd);border-radius:7px;color:var(--tx1);font-size:13px;outline:none;min-width:140px">
+        <button onclick="registerUser()" style="padding:9px 20px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">Создать</button>
+      </div>
+      <div id="regMsg" style="margin-top:10px;font-size:12px;display:none"></div>
+    </div>
+
+    <div class="cd" style="margin-bottom:16px"><table class="tbl">
+      <thead><tr><th>Пользователь</th><th>Роль</th><th>Статус</th><th>Уровень доступа</th></tr></thead>
+      <tbody id="usersTableBody">
+        <tr><td style="font-weight:700">admin</td><td><span class="act" style="background:#fff7ed;color:var(--acc);font-size:9px;padding:2px 9px;border-radius:8px;font-weight:700">АДМИНИСТРАТОР</span></td><td><span class="act act-ok">АКТИВНО</span></td><td style="font-size:12px;color:var(--mid)">Полный доступ ко всем разделам</td></tr>
+        <tr><td style="font-weight:700">user</td><td><span class="act" style="background:#f3f4f6;color:#374151;font-size:9px;padding:2px 9px;border-radius:8px;font-weight:700">USER</span></td><td><span class="act act-ok">АКТИВНО</span></td><td style="font-size:12px;color:var(--mid)">Только чтение — без admin разделов</td></tr>
+        <tr><td style="font-weight:700">test</td><td><span class="act" style="background:#f3f4f6;color:#374151;font-size:9px;padding:2px 9px;border-radius:8px;font-weight:700">USER</span></td><td><span class="act act-ok">АКТИВНО</span></td><td style="font-size:12px;color:var(--mid)">Только чтение — без admin разделов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="cd"><div class="cd-hd"><span class="cd-t">Матрица прав доступа</span></div>
+    <table class="tbl">
+      <thead><tr><th>Раздел</th><th>Admin</th><th>User</th></tr></thead>
+      <tbody>
+        <tr><td>Обзор</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ok">ДА</span></td></tr>
+        <tr><td>Защищённые ресурсы</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ok">ДА</span></td></tr>
+        <tr><td>События безопасности</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ok">ДА</span></td></tr>
+        <tr><td>Статус защиты</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ok">ДА</span></td></tr>
+        <tr><td>Заблокированные IP</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ban">НЕТ</span></td></tr>
+        <tr><td>Управление пользователями</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ban">НЕТ</span></td></tr>
+        <tr><td>Live Shield Monitor</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ban">НЕТ</span></td></tr>
+        <tr><td>Сбросить репутацию IP</td><td><span class="act act-ok">ДА</span></td><td><span class="act act-ban">НЕТ</span></td></tr>
+      </tbody>
+    </table></div>`;
+}
+
+async function registerUser(){
+  const u=document.getElementById('regUser')?.value.trim();
+  const p=document.getElementById('regPass')?.value;
+  const msg=document.getElementById('regMsg');
+  if(!u||!p){if(msg){msg.style.display='block';msg.style.color='#dc2626';msg.textContent='Заполните все поля';}return;}
+  try{
+    const r=await fetch(API+'/api/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('as_token')},
+      body:JSON.stringify({username:u,password:p})
+    });
+    const d=await r.json();
+    if(msg){
+      msg.style.display='block';
+      if(r.status===201){
+        msg.style.color='#16a34a';
+        msg.textContent='✓ '+d.message;
+        document.getElementById('regUser').value='';
+        document.getElementById('regPass').value='';
+        // Add to table
+        const tb=document.getElementById('usersTableBody');
+        if(tb){
+          const row=document.createElement('tr');
+          row.innerHTML=`<td style="font-weight:700">${u}</td><td><span class="act" style="background:#f3f4f6;color:#374151;font-size:9px;padding:2px 9px;border-radius:8px;font-weight:700">USER</span></td><td><span class="act act-ok">АКТИВНО</span></td><td style="font-size:12px;color:var(--mid)">Только чтение</td>`;
+          tb.appendChild(row);
+        }
+      } else {
+        msg.style.color='#dc2626';
+        msg.textContent='✗ '+d.message;
+      }
+    }
+  }catch(e){if(msg){msg.style.display='block';msg.style.color='#dc2626';msg.textContent='Ошибка подключения';}}
+}
+
+function buildShieldTab(){
+  document.getElementById('t-shield').innerHTML=`
+    <div class="pg-title">Live Shield Monitor</div>
+    <div class="pg-sub">Real-time data from Adaptive Shield API — admin only</div>
+    <div id="liveShield"><div style="color:var(--mid)">Загрузка...</div></div>
+    <div style="margin-top:16px;text-align:center">
+      <a href="http://shield.local:8000/dashboard" target="_blank" style="display:inline-block;padding:11px 28px;background:var(--acc);color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none">Open Full Dashboard →</a>
+    </div>`;
+}
+
+async function loadLive(){
+  try{
+    const r=await fetch(API+'/dashboard/api/status');
+    const d=await r.json(); const m=d.metrics||{};
+    const el=document.getElementById('liveShield'); if(!el) return;
+    el.innerHTML=`<div class="g4">
+      <div class="cd c-blue"><div class="cd-t">Запросы</div><div class="mc-val">${(m.requests_total||0).toLocaleString()}</div><div class="mc-sub">Total</div><div class="mc-bar"><div class="mc-fill" style="width:70%"></div></div></div>
+      <div class="cd c-red"><div class="cd-t">Blocked</div><div class="mc-val">${(m.blocked_total||0).toLocaleString()}</div><div class="mc-sub">Threats</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
+      <div class="cd c-pur"><div class="cd-t">Brute Force</div><div class="mc-val">${(m.bruteforce_blocked_total||0).toLocaleString()}</div><div class="mc-sub">Атаки авторизации</div><div class="mc-bar"><div class="mc-fill" style="width:20%"></div></div></div>
+      <div class="cd c-acc"><div class="cd-t">RPS</div><div class="mc-val">${(d.rate_limiter?.current_rps||0).toFixed(1)}</div><div class="mc-sub">Current</div><div class="mc-bar"><div class="mc-fill" style="width:30%"></div></div></div>
+    </div>`;
+  }catch(e){}
+}
+
+function logout(){
+  ['as_user','as_role','as_token'].forEach(k=>localStorage.removeItem(k));
+  window.location.href='login.html';
+}
+
+loadStats(); loadEvents();
+setInterval(()=>{ loadStats(); loadEvents(); },3000);
+</script>
+</body>
+</html>

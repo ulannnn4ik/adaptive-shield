@@ -31,8 +31,25 @@ class ShieldMiddleware(BaseHTTPMiddleware):
     AUTH_PATHS = {"/api/login", "/api/auth/login", "/login"}
     SKIP_PATHS = {
         "/health", "/docs", "/openapi.json", "/favicon.ico",
-        "/api/logout", "/api/me", "/admin",
+        "/api/logout", "/api/me", "/site/admin.html", "/admin",
     }
+    SKIP_PREFIXES = {"/site/", "/static/"}
+
+    # ── HONEYPOT PATHS ────────────────────────────────────────
+    # Пути-ловушки: легитимный пользователь НИКОГДА сюда не зайдёт.
+    # Кто зашёл — однозначно сканер или хакер → немедленный бан на 1 час.
+    # Возвращаем 200 с фейковыми данными (не 403/404) — тратим время атакующего.
+    HONEYPOT_PATHS = {
+        "/.env",
+        "/.git/config",
+        "/wp-admin",
+        "/wp-login.php",
+        "/phpmyadmin",
+        "/.aws/credentials",
+        "/config.php",
+        "/setup.php",
+    }
+    HONEYPOT_BAN_SECONDS = 3600  # 1 час бана за попытку
 
     # ── SLOWLORIS PROTECTION ──────────────────────────────────
     REQUEST_TIMEOUT = 10        # секунд — убиваем медленные соединения
@@ -100,6 +117,10 @@ class ShieldMiddleware(BaseHTTPMiddleware):
         if path.startswith("/dashboard") or path in self.SKIP_PATHS:
             return await call_next(request)
 
+        # Пути сайта (/site/) — пропускаем без проверок (статические файлы)
+        if any(path.startswith(p) for p in self.SKIP_PREFIXES):
+            return await call_next(request)
+
         # ── IP EXTRACTION ─────────────────────────────────────
         real_ip = request.client.host if request.client else "unknown"
         TRUSTED_PROXIES = {"127.0.0.1", "::1"}
@@ -113,6 +134,34 @@ class ShieldMiddleware(BaseHTTPMiddleware):
                 ip = real_ip
         else:
             ip = real_ip
+
+        # ── HONEYPOT CHECK ────────────────────────────────────
+        # Первым делом проверяем пути-ловушки — до всех остальных проверок.
+        # Нормальный юзер никогда не зайдёт на /.env или /wp-admin.
+        path_check = path.lower().rstrip("/")
+        if path_check in {p.rstrip("/") for p in self.HONEYPOT_PATHS}:
+            real_ip = request.client.host if request.client else "unknown"
+            log.warning("honeypot_triggered", ip=real_ip, path=path)
+            await EventLogger.log_event(
+                "honeypot", real_ip, path, "banned",
+                {"reason": "honeypot_path", "ban_seconds": self.HONEYPOT_BAN_SECONDS}
+            )
+            await EventLogger.increment_metric("blocked_total")
+            await EventLogger.increment_metric("requests_total")
+            # Немедленный бан через IP Reputation
+            await IPReputation.add_violation(real_ip, "honeypot", f"path:{path}")
+            try:
+                from app.core import get_redis
+                r = await get_redis()
+                ban_key = f"shield:ip_reputation:{real_ip}"
+                await r.setex(ban_key, self.HONEYPOT_BAN_SECONDS, "banned")
+            except Exception:
+                pass
+            # Возвращаем 200 с фейковыми данными — не раскрываем что попался
+            import json as _json
+            from starlette.responses import Response as _Resp
+            fake = _json.dumps({"status": "ok", "data": [], "version": "1.0"})
+            return _Resp(content=fake, media_type="application/json", status_code=200)
 
         # ── BOT DETECTION ─────────────────────────────────────
         # Проверяем User-Agent до всех остальных проверок —
@@ -154,7 +203,8 @@ class ShieldMiddleware(BaseHTTPMiddleware):
         # Возвращаем 404 а не 403 — не раскрываем что система нашла паттерн.
         path_lower = path.lower().rstrip("/")
         if path_lower in self.SCANNER_PATHS or any(
-            path_lower.startswith(sp) for sp in self.SCANNER_PATHS if len(sp) > 1
+            path_lower.startswith(sp + "/") or path_lower.startswith(sp + "?")
+            for sp in self.SCANNER_PATHS if len(sp) > 1
         ):
             log.warning("scanner_blocked", ip=ip, path=path)
             await EventLogger.log_event(
@@ -279,6 +329,18 @@ class ShieldMiddleware(BaseHTTPMiddleware):
 
         identifier = ip if ip != "127.0.0.1" else fingerprint["fingerprint_id"]
 
+        # Проверяем аутентификацию — залогиненный admin не получает violations
+        is_admin = False
+        try:
+            from app.core.auth import get_token_from_request, decode_token
+            token = get_token_from_request(request)
+            if token:
+                payload = decode_token(token)
+                if payload and payload.get("role") == "admin":
+                    is_admin = True
+        except Exception:
+            pass
+
         # Pre-check: is this identifier already banned?
         reputation_action = await IPReputation.get_action(identifier)
         if reputation_action == "ban":
@@ -298,7 +360,8 @@ class ShieldMiddleware(BaseHTTPMiddleware):
         )
 
         if not rate_result["allowed"]:
-            await IPReputation.add_violation(identifier, "rate_limit", f"path={path}")
+            if not is_admin:
+                await IPReputation.add_violation(identifier, "rate_limit", f"path={path}")
             await EventLogger.log_event(
                 "rate_limited", ip, path, "blocked",
                 {"count": rate_result["current_count"], "limit": rate_result["limit"]},
@@ -320,7 +383,7 @@ class ShieldMiddleware(BaseHTTPMiddleware):
 
         # Anomaly detection
         anomaly_result = await AnomalyDetector.analyze_request(identifier, path)
-        if anomaly_result["is_anomaly"]:
+        if anomaly_result["is_anomaly"] and not is_admin:
             penalty_type = (
                 "ddos_pattern"
                 if "global_traffic_spike" in anomaly_result["reasons"]
@@ -337,7 +400,7 @@ class ShieldMiddleware(BaseHTTPMiddleware):
                 )
 
         # Suspicious fingerprint penalty
-        if is_suspicious:
+        if is_suspicious and not is_admin:
             await IPReputation.add_violation(
                 identifier, "suspicious_fingerprint",
                 f"reasons={','.join(fp_reasons)}",

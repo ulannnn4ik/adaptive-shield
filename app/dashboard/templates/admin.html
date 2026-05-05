@@ -355,7 +355,7 @@ function render(){
                 </span>
               </td>
               <td style="color:var(--tx3);font-size:12px;font-family:'Fira Code',monospace">
-                ${u.created_at || '—'}
+                ${u.created_at ? new Date(u.created_at * 1000).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}
               </td>
               <td>
                 <div class="action-wrap">

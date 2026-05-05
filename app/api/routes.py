@@ -103,8 +103,12 @@ async def login(request: Request, body: LoginRequest):
 
 
 @app_router.post("/logout")
-async def logout():
-    """Clear auth cookie."""
+async def logout(request: Request):
+    """Clear auth cookie and blacklist the token."""
+    from app.core.auth import blacklist_token, get_token_from_request
+    token = get_token_from_request(request)
+    if token:
+        await blacklist_token(token)
     response = JSONResponse(content={"success": True, "message": "Logged out"})
     response.delete_cookie("shield_token")
     response.delete_cookie("as_token")

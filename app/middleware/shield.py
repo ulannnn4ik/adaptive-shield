@@ -347,6 +347,9 @@ class ShieldMiddleware(BaseHTTPMiddleware):
             await EventLogger.log_event("blocked", ip, path, "banned_ip")
             await EventLogger.increment_metric("blocked_total")
             await EventLogger.increment_metric("requests_total")
+            from app.core.alerts import alert_ip_banned
+            score = await IPReputation.get_score(identifier)
+            asyncio.create_task(alert_ip_banned(ip, score))
             return JSONResponse(
                 status_code=403,
                 content={"error": "Access denied", "reason": "banned"},

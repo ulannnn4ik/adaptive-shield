@@ -213,14 +213,14 @@ body::-webkit-scrollbar{display:none}
     <!-- TRAFFIC -->
     <div class="tab" id="t-traffic">
       <div class="g3">
-        <div class="cd mt c-gn"><div class="mt-label">Baseline RPS</div><div class="mt-v" id="tB">0</div><div class="mt-sub">Learned average</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-gn"><div class="mt-label">Базовый RPS</div><div class="mt-v" id="tB">0</div><div class="mt-sub">Выученное среднее</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
         <div class="cd mt c-cy"><div class="mt-label">Текущий RPS</div><div class="mt-v" id="tC">0</div><div class="mt-sub">Live rate</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
-        <div class="cd mt c-am"><div class="mt-label">Адаптивный множитель</div><div class="mt-v" id="tM">1.0</div><div class="mt-sub">Scaling factor</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-am"><div class="mt-label">Адаптивный множитель</div><div class="mt-v" id="tM">1.0</div><div class="mt-sub">Коэффициент масштаба</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
       </div>
       <div class="cd" style="margin-bottom:18px"><div class="cd-h"><span class="cd-t">График трафика</span></div><div class="ch"><canvas id="cTraffic2"></canvas></div></div>
       <div class="cd"><div class="cd-h"><span class="cd-t">Как это работает</span></div>
         <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
-          <p>Baseline learned via <span style="color:var(--tx1);font-weight:700">Exponential Moving Average (EMA)</span>. When traffic exceeds baseline × burst multiplier, limits auto-tighten.</p>
+          <p>Базовая линия определяется через <span style="color:var(--tx1);font-weight:700">Экспоненциальное скользящее среднее (EMA)</span>. Когда трафик превышает базовую линию × множитель всплеска, лимиты автоматически ужесточаются.</p>
           <p style="margin-top:6px"><span style="color:var(--amb);font-weight:600">Multiplier &lt; 1.0</span> = идёт атака · <span style="color:var(--tx1);font-weight:600">1.0</span> = норма · <span style="color:var(--grn);font-weight:600">&gt; 1.0</span> = спокойно</p>
         </div>
       </div>
@@ -251,11 +251,11 @@ body::-webkit-scrollbar{display:none}
     <div class="tab" id="t-bruteforce">
       <div class="g3">
         <div class="cd mt c-rd"><div class="mt-label">Заблокированные IP</div><div class="mt-v" id="bL">0</div><div class="mt-sub">Заблокировано сейчас</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
-        <div class="cd mt c-am"><div class="mt-label">Failed Attempts</div><div class="mt-v" id="bA">0</div><div class="mt-sub">Всего неудач</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
+        <div class="cd mt c-am"><div class="mt-label">Неудачных попыток</div><div class="mt-v" id="bA">0</div><div class="mt-sub">Всего неудач</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
         <div class="cd mt c-pu"><div class="mt-label">Заблокировано</div><div class="mt-v" id="bB">0</div><div class="mt-sub">Остановлено атак</div><div class="mt-bar"><div class="mt-bar-fill"></div></div></div>
       </div>
       <div class="g2">
-        <div class="cd"><div class="cd-h"><span class="cd-t">Currently Locked</span></div><div id="lkList"><p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p></div></div>
+        <div class="cd"><div class="cd-h"><span class="cd-t">Текущие блокировки</span></div><div id="lkList"><p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p></div></div>
         <div class="cd"><div class="cd-h"><span class="cd-t">Как это работает</span></div>
           <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
             <p><span style="color:var(--tx1);font-weight:700">Progressive Lockout:</span> 15min → 30min → 60min</p>
@@ -540,11 +540,11 @@ body::-webkit-scrollbar{display:none}
               </div>
               <div style="display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--brd)">
                 <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--amb)">02</div>
-                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Progressive Lockout</div><div style="font-size:11px">5 fails → 15 min lock. 10 fails → 30 min. 15 fails → 60 min.</div></div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Progressive Lockout</div><div style="font-size:11px">5 ошибок → 15 мин блок. 10 ошибок → 30 мин. 15 ошибок → 60 мин.</div></div>
               </div>
               <div style="display:flex;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--brd)">
                 <div style="width:32px;height:32px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--red)">03</div>
-                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">IP Reputation Score</div><div style="font-size:11px">Each failed attempt raises the score. Score ≥ 100 → permanent IP ban.</div></div>
+                <div><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">IP Reputation Score</div><div style="font-size:11px">Каждая неудачная попытка повышает счёт. Score ≥ 100 → постоянный бан IP.</div></div>
               </div>
               <div style="display:flex;gap:12px;align-items:start;padding:10px 0">
                 <div style="width:32px;height:32px;border-radius:8px;background:#ede9fe;border:1px solid #c4b5fd;display:grid;place-items:center;flex-shrink:0;font-family:'Fira Code',monospace;font-size:10px;font-weight:700;color:var(--pur)">04</div>
@@ -627,7 +627,7 @@ body::-webkit-scrollbar{display:none}
         <div class="cd-h"><span class="cd-t">Why Admin Panels Are Targeted</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:12.5px;color:var(--tx2);line-height:1.8">
           <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--red);margin-bottom:6px">DDoS Against Admin</div>Flooding the admin endpoint with thousands of requests per second to crash the management interface and blind the defender.</div>
-          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--pur);margin-bottom:6px">Brute Force on Admin Login</div>Automated tools like Hydra try thousands of admin:password combinations в минуту until access is granted.</div>
+          <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--pur);margin-bottom:6px">Brute Force на форму входа</div>Автоматические инструменты типа Hydra перебирают тысячи комбинаций admin:password в минуту до получения доступа.</div>
           <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--amb);margin-bottom:6px">Credential Stuffing</div>Using leaked database dumps to test admin credentials. One match gives full control of the server.</div>
           <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--brd)"><div style="font-weight:700;color:var(--grn);margin-bottom:6px">Adaptive Shield Response</div>Rate limit + lockout + IP ban + Telegram alert — all triggered within milliсекунд of attack detection.</div>
         </div>
@@ -657,9 +657,9 @@ body::-webkit-scrollbar{display:none}
           <div class="cd-h"><span class="cd-t">DDoS Attack Types</span></div>
           <div style="font-size:12.5px;color:var(--tx2);line-height:1.9">
             <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">HTTP Flood (Layer 7)</div><div style="font-size:11px">Sends thousands of valid HTTP GET/POST requests. Hard to block — looks like real traffic. Adaptive Shield detects via EMA baseline deviation.</div></div>
-            <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">SYN Flood (Layer 4)</div><div style="font-size:11px">Sends millions of TCP SYN packets without completing handshake. Blocked at network layer by iptables rules.</div></div>
+            <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">SYN Flood (Layer 4)</div><div style="font-size:11px">Отправляет миллионы TCP SYN пакетов без завершения рукопожатия. Блокируется на сетевом уровне правилами iptables.</div></div>
             <div style="padding:10px 0;border-bottom:1px solid var(--brd)"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">Slowloris (Layer 7)</div><div style="font-size:11px">Holds connections open with slow headers. Nginx timeout config kills these within 10 секунд.</div></div>
-            <div style="padding:10px 0"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">UDP Flood (Layer 3)</div><div style="font-size:11px">Floods with UDP packets. Blocked at iptables level before reaching the application.</div></div>
+            <div style="padding:10px 0"><div style="font-weight:700;color:var(--tx1);margin-bottom:3px">UDP Flood (Layer 3)</div><div style="font-size:11px">Заполняет канал UDP пакетами. Блокируется на уровне iptables до достижения приложения.</div></div>
           </div>
         </div>
       </div>
@@ -680,11 +680,11 @@ body::-webkit-scrollbar{display:none}
       <div class="g2" style="align-items:start">
         <div class="cd">
           <div class="cd-h"><span class="cd-t">Brute Force Attack Simulator</span><span style="font-size:10px;background:#fef3c7;color:var(--amb);padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid #fcd34d">VISUAL DEMO</span></div>
-          <div style="font-size:12.5px;color:var(--tx2);margin-bottom:16px;line-height:1.8">Simulates what an attacker using Hydra or Burp Suite sees when trying to brute force your login.</div>
+          <div style="font-size:12.5px;color:var(--tx2);margin-bottom:16px;line-height:1.8">Симулирует то, что видит атакующий при использовании Hydra или Burp Suite для перебора пароля.</div>
           <div style="margin-bottom:14px">
             <label style="font-size:11px;color:var(--tx2);font-weight:600;display:block;margin-bottom:6px">Attack Tool</label>
             <select id="bfTool" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--brd);border-radius:8px;color:var(--tx1);font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
-              <option value="hydra">Hydra — fast parallel brute force</option>
+              <option value="hydra">Hydra — быстрый параллельный перебор</option>
               <option value="burp">Burp Suite Intruder — dictionary attack</option>
               <option value="medusa">Medusa — multi-protocol attack</option>
               <option value="custom">Custom script — credential stuffing</option>
@@ -714,8 +714,8 @@ body::-webkit-scrollbar{display:none}
           <div class="cd">
             <div class="cd-h"><span class="cd-t">Эффективность защиты</span></div>
             <div style="font-size:12px;color:var(--tx2);line-height:1.9">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Hydra (1000 attempts/min)</span><span style="color:var(--grn);font-weight:700">100% blocked in 0.3s</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Dictionary attack (rockyou.txt)</span><span style="color:var(--grn);font-weight:700">100% blocked in 0.6s</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Hydra (1000 попыток/мин)</span><span style="color:var(--grn);font-weight:700">100% заблокировано за 0.3с</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Словарная атака (rockyou.txt)</span><span style="color:var(--grn);font-weight:700">100% заблокировано за 0.6с</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd)"><span>Credential stuffing (10K pairs)</span><span style="color:var(--grn);font-weight:700">99.8% blocked</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Slow brute force (1/min)</span><span style="color:var(--amb);font-weight:700">Detected in 5 attempts</span></div>
             </div>
@@ -1111,7 +1111,7 @@ async function fS(){try{const r=await fetch(A+'/status');const d=await r.json();
 document.getElementById('mR').textContent=m.requests_total.toLocaleString();document.getElementById('mB').textContent=m.blocked_total.toLocaleString();document.getElementById('mL').textContent=m.rate_limited_total.toLocaleString();document.getElementById('mF').textContent=m.bruteforce_blocked_total.toLocaleString();document.getElementById('mA').textContent=m.anomalies_detected.toLocaleString();document.getElementById('mP').textContent=d.rate_limiter.current_rps.toFixed(1);
 document.getElementById('tB').textContent=d.rate_limiter.baseline_rps.toFixed(2);document.getElementById('tC').textContent=d.rate_limiter.current_rps.toFixed(2);document.getElementById('tM').textContent=d.rate_limiter.adaptive_multiplier.toFixed(3);
 document.getElementById('bL').textContent=d.brute_force.locked_count;document.getElementById('bB').textContent=m.bruteforce_blocked_total;document.getElementById('bA').textContent=m.blocked_total;
-const ll=document.getElementById('lkList');ll.innerHTML=d.brute_force.locked_ips.length?d.brute_force.locked_ips.map(l=>`<div class="ev"><span class="ev-dot blocked"></span><span class="ev-ip">${l.ip}</span><span class="ev-d">${l.remaining_секунд}s remaining</span></div>`).join(''):'<p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p>';
+const ll=document.getElementById('lkList');ll.innerHTML=d.brute_force.locked_ips.length?d.brute_force.locked_ips.map(l=>`<div class="ev"><span class="ev-dot blocked"></span><span class="ev-ip">${l.ip}</span><span class="ev-d">${l.remaining_seconds || "?"}с осталось</span></div>`).join(''):'<p style="color:var(--tx3);font-size:12px">Нет заблокированных IP</p>';
 const b=document.getElementById('tBadge'),dot=document.getElementById('sDot'),st=document.getElementById('sTxt'),nb=document.getElementById('nBadge');
 if(d.rate_limiter.current_rps>d.rate_limiter.baseline_rps*2&&d.rate_limiter.baseline_rps>1){dot.className='sb-dot atk';if(st)st.textContent='';nb.style.display='inline';}
 else{dot.className='sb-dot';if(st)st.textContent='';nb.style.display='none';}

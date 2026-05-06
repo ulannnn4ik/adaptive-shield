@@ -60,7 +60,7 @@ async def login(request: Request, body: LoginRequest):
     """Login endpoint — returns JWT token with role."""
     ip = request.client.host if request.client else "unknown"
     fingerprint = extract_fingerprint(request)
-    identifier = fingerprint["fingerprint_id"]
+    identifier = ip  # Используем IP для BruteForce трекинга
 
     user = await verify_user(body.username, body.password)
     if user:

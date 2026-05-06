@@ -327,7 +327,7 @@ class ShieldMiddleware(BaseHTTPMiddleware):
         fingerprint = extract_fingerprint(request)
         is_suspicious, fp_reasons = is_suspicious_fingerprint(fingerprint)
 
-        identifier = ip if ip != "127.0.0.1" else fingerprint["fingerprint_id"]
+        identifier = ip
 
         # Проверяем аутентификацию — залогиненный admin не получает violations
         is_admin = False

@@ -125,7 +125,7 @@ nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;
     </div>
   </div>
   <div class="nav-right">
-    <span class="nav-user">Signed in as <strong id="navUser">—</strong></span>
+    <span class="nav-user">Вы вошли как <strong id="navUser">—</strong></span>
     <span class="role-pill" id="navRole">USER</span>
     <button class="btn-out" onclick="logout()">Выйти</button>
   </div>
@@ -137,16 +137,16 @@ nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;
     <div class="sb-item on" data-tab="overview">Обзор</div>
     <div class="sb-item" data-tab="resources">Защищённые ресурсы</div>
     <div class="sb-item" data-tab="events">События безопасности</div>
-    <div class="sb-sect">Protection</div>
+    <div class="sb-sect">Защита</div>
     <div class="sb-item" data-tab="security">Статус защиты</div>
     <div class="sb-item" id="sbIPs" data-tab="ips">
       <span>Заблокированные IP</span><span id="sbIPsLock" style="font-size:11px;color:#b0b0b8">🔒</span>
     </div>
-    <div class="sb-sect">Admin</div>
-    <div class="sb-item" id="sbUsers" data-tab="users">
+    <div class="sb-sect" id="adminSection" style="display:none">Admin</div>
+    <div class="sb-item" id="sbUsers" data-tab="users" style="display:none">
       <span>Управление пользователями</span><span id="sbUsersLock" style="font-size:11px;color:#b0b0b8">🔒</span>
     </div>
-    <div class="sb-item" id="sbShield" data-tab="shield">
+    <div class="sb-item" id="sbShield" data-tab="shield" style="display:none">
       <span>Мониторинг Shield</span><span id="sbShieldLock" style="font-size:11px;color:#b0b0b8">🔒</span>
     </div>
     
@@ -165,19 +165,19 @@ nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;
         </div>
         <div class="pc-right">
           <div class="pc-stat"><div class="pc-stat-n" id="pcReq">—</div><div class="pc-stat-l">Запросы</div></div>
-          <div class="pc-stat"><div class="pc-stat-n" id="pcBlk">—</div><div class="pc-stat-l">Blocked</div></div>
+          <div class="pc-stat"><div class="pc-stat-n" id="pcBlk">—</div><div class="pc-stat-l">Заблокировано</div></div>
           <div class="pc-stat"><div class="pc-stat-n" id="pcRPS">—</div><div class="pc-stat-l">RPS</div></div>
         </div>
       </div>
       <div class="g4">
         <div class="cd c-blue"><div class="cd-t">Запросы</div><div class="mc-val" id="mReq">—</div><div class="mc-sub">Всего обработано</div><div class="mc-bar"><div class="mc-fill" style="width:70%"></div></div></div>
-        <div class="cd c-red"><div class="cd-t">Blocked</div><div class="mc-val" id="mBlk">—</div><div class="mc-sub">Угроз остановлено</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
+        <div class="cd c-red"><div class="cd-t">Заблокировано</div><div class="mc-val" id="mBlk">—</div><div class="mc-sub">Угроз остановлено</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
         <div class="cd c-pur"><div class="cd-t">Brute Force</div><div class="mc-val" id="mBF">—</div><div class="mc-sub">Атаки авторизации</div><div class="mc-bar"><div class="mc-fill" style="width:20%"></div></div></div>
-        <div class="cd c-acc"><div class="cd-t">Req/sec</div><div class="mc-val" id="mRPS">—</div><div class="mc-sub">Текущая скорость</div><div class="mc-bar"><div class="mc-fill" style="width:30%"></div></div></div>
+        <div class="cd c-acc"><div class="cd-t">Зап/сек</div><div class="mc-val" id="mRPS">—</div><div class="mc-sub">Текущая скорость</div><div class="mc-bar"><div class="mc-fill" style="width:30%"></div></div></div>
       </div>
       <div class="g2">
-        <div class="cd"><div class="cd-hd"><span class="cd-t">Recent Events</span><span class="cd-a" onclick="go('events')">Все →</span></div><div id="ovEv"><div style="color:var(--mid);font-size:13px">Загрузка...</div></div></div>
-        <div class="cd"><div class="cd-hd"><span class="cd-t">Active Protection</span></div>
+        <div class="cd"><div class="cd-hd"><span class="cd-t">Последние события</span><span class="cd-a" onclick="go('events')">Все →</span></div><div id="ovEv"><div style="color:var(--mid);font-size:13px">Загрузка...</div></div></div>
+        <div class="cd"><div class="cd-hd"><span class="cd-t">Активная защита</span></div>
           <div class="sec-row"><div><div class="sec-label">Ограничение запросов</div><div class="sec-desc">Token Bucket + Sliding Window</div></div><span class="tag-on">ON</span></div>
           <div class="sec-row"><div><div class="sec-label">Защита от Brute Force</div><div class="sec-desc">Прогрессивная блокировка активна</div></div><span class="tag-on">ON</span></div>
           <div class="sec-row"><div><div class="sec-label">Защита от DDoS</div><div class="sec-desc">EMA анализ baseline</div></div><span class="tag-on">ON</span></div>
@@ -189,28 +189,28 @@ nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;
     <!-- RESOURCES -->
     <div class="tab" id="t-resources">
       <div class="pg-title">Защищённые ресурсы</div>
-      <div class="pg-sub">Web resources under Adaptive Shield protection</div>
+      <div class="pg-sub">Веб-ресурсы под защитой Adaptive Shield</div>
       <div class="res-card">
         <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-          <div><div class="res-name">Main Web Resource</div><div class="res-url">shield.local:8000/site</div></div></div>
-        <div class="res-right"><div class="res-stat"><div class="res-stat-n" id="rReq">—</div><div class="res-stat-l">requests</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--red)" id="rBlk">—</div><div class="res-stat-l">blocked</div></div><div class="st-dot"></div></div>
+          <div><div class="res-name">Основной веб-ресурс</div><div class="res-url">shield.local:8000/site</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" id="rReq">—</div><div class="res-stat-l">запросов</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--red)" id="rBlk">—</div><div class="res-stat-l">заблокировано</div></div><div class="st-dot"></div></div>
       </div>
       <div class="res-card">
         <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <div><div class="res-name">Login Endpoint</div><div class="res-url">shield.local:8000/site/login</div></div></div>
-        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--pur)" id="rBF">—</div><div class="res-stat-l">brute force</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)">5/min</div><div class="res-stat-l">rate limit</div></div><div class="st-dot"></div></div>
+          <div><div class="res-name">Точка входа</div><div class="res-url">shield.local:8000/site/login</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--pur)" id="rBF">—</div><div class="res-stat-l">brute force</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)">5/min</div><div class="res-stat-l">лимит</div></div><div class="st-dot"></div></div>
       </div>
       <div class="res-card">
         <div class="res-left"><div class="res-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-          <div><div class="res-name">API Endpoints</div><div class="res-url">shield.local:8000/api/*</div></div></div>
-        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)" id="rLim">—</div><div class="res-stat-l">rate limited</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--grn)">100/min</div><div class="res-stat-l">limit</div></div><div class="st-dot"></div></div>
+          <div><div class="res-name">API Эндпоинты</div><div class="res-url">shield.local:8000/api/*</div></div></div>
+        <div class="res-right"><div class="res-stat"><div class="res-stat-n" style="color:var(--amb)" id="rLim">—</div><div class="res-stat-l">ограничено</div></div><div class="res-stat"><div class="res-stat-n" style="color:var(--grn)">100/min</div><div class="res-stat-l">лимит</div></div><div class="st-dot"></div></div>
       </div>
     </div>
 
     <!-- EVENTS -->
     <div class="tab" id="t-events">
       <div class="pg-title">События безопасности</div>
-      <div class="pg-sub">Real-time log — auto-refresh every 3s</div>
+      <div class="pg-sub">Лог в реальном времени — обновление каждые 3с</div>
       <div class="cd"><div id="evList"><div style="color:var(--mid);font-size:13px">Загрузка...</div></div></div>
     </div>
 
@@ -219,12 +219,12 @@ nav{background:#fff;border-bottom:1px solid var(--brd);height:54px;display:flex;
       <div class="pg-title">Статус защиты</div>
       <div class="pg-sub">Все активные механизмы защиты</div>
       <div class="cd">
-        <div class="sec-row"><div><div class="sec-label">DDoS — EMA Rate Limiting</div><div class="sec-desc">Baseline analysis · burst multiplier 3.0×</div></div><span class="tag-on">АКТИВНО</span></div>
-        <div class="sec-row"><div><div class="sec-label">Brute Force — Progressive Lockout</div><div class="sec-desc">5 fails → 15 min · 10 → 30 min · 15 → 60 min</div></div><span class="tag-on">АКТИВНО</span></div>
-        <div class="sec-row"><div><div class="sec-label">IP Reputation Scoring</div><div class="sec-desc">Decay 0.95/min · ban at 100 · challenge at 50</div></div><span class="tag-on">АКТИВНО</span></div>
-        <div class="sec-row"><div><div class="sec-label">Anomaly Detection</div><div class="sec-desc">Z-score 2.5σ threshold</div></div><span class="tag-on">АКТИВНО</span></div>
-        <div class="sec-row"><div><div class="sec-label">Client Fingerprinting</div><div class="sec-desc">TLS + headers + timing</div></div><span class="tag-on">АКТИВНО</span></div>
-        <div class="sec-row"><div><div class="sec-label">Credential Stuffing Detection</div><div class="sec-desc">3+ usernames from one IP</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">DDoS — EMA Rate Limiting</div><div class="sec-desc">Анализ базовой линии · множитель всплеска 3.0×</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Brute Force — Progressive Lockout</div><div class="sec-desc">5 ошибок → 15 мин · 10 → 30 мин · 15 → 60 мин</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">IP Reputation Scoring</div><div class="sec-desc">Затухание 0.95/мин · бан при 100 · проверка при 50</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Обнаружение аномалий</div><div class="sec-desc">Порог Z-score 2.5σ</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Отпечаток клиента</div><div class="sec-desc">TLS + заголовки + тайминг</div></div><span class="tag-on">АКТИВНО</span></div>
+        <div class="sec-row"><div><div class="sec-label">Обнаружение Credential Stuffing</div><div class="sec-desc">3+ логинов с одного IP</div></div><span class="tag-on">АКТИВНО</span></div>
       </div>
     </div>
 
@@ -311,12 +311,12 @@ function showDenied(page){
   d.innerHTML=`<div class="denied">
     <div class="denied-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <div class="denied-badge">Your role: ${role.toUpperCase()}</div>
-    <h3>Admin access required</h3>
-    <p><strong>${names[page]}</strong> is only available to administrators.<br>You are logged in as a standard user.</p>
+    <h3>Требуется доступ администратора</h3>
+    <p><strong>${names[page]}</strong> is only available to administrators.<br>Вы вошли как обычный пользователь.</p>
     <table class="denied-table">
-      <tr><td style="color:var(--mid)">Your role</td><td><strong>user</strong> — read only</td></tr>
-      <tr><td style="color:var(--mid)">Required role</td><td><strong style="color:var(--acc)">admin</strong> — full access</td></tr>
-      <tr><td style="color:var(--mid)">What you can access</td><td>Overview, Resources, Events, Protection Status</td></tr>
+      <tr><td style="color:var(--mid)">Ваша роль</td><td><strong>user</strong> — read only</td></tr>
+      <tr><td style="color:var(--mid)">Требуемая роль</td><td><strong style="color:var(--acc)">admin</strong> — full access</td></tr>
+      <tr><td style="color:var(--mid)">Доступно вам</td><td>Обзор, Ресурсы, События, Статус защиты</td></tr>
     </table>
   </div>`;
   document.querySelector('.main').appendChild(d);
@@ -492,7 +492,7 @@ async function loadLive(){
     const el=document.getElementById('liveShield'); if(!el) return;
     el.innerHTML=`<div class="g4">
       <div class="cd c-blue"><div class="cd-t">Запросы</div><div class="mc-val">${(m.requests_total||0).toLocaleString()}</div><div class="mc-sub">Total</div><div class="mc-bar"><div class="mc-fill" style="width:70%"></div></div></div>
-      <div class="cd c-red"><div class="cd-t">Blocked</div><div class="mc-val">${(m.blocked_total||0).toLocaleString()}</div><div class="mc-sub">Threats</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
+      <div class="cd c-red"><div class="cd-t">Заблокировано</div><div class="mc-val">${(m.blocked_total||0).toLocaleString()}</div><div class="mc-sub">Threats</div><div class="mc-bar"><div class="mc-fill" style="width:40%"></div></div></div>
       <div class="cd c-pur"><div class="cd-t">Brute Force</div><div class="mc-val">${(m.bruteforce_blocked_total||0).toLocaleString()}</div><div class="mc-sub">Атаки авторизации</div><div class="mc-bar"><div class="mc-fill" style="width:20%"></div></div></div>
       <div class="cd c-acc"><div class="cd-t">RPS</div><div class="mc-val">${(d.rate_limiter?.current_rps||0).toFixed(1)}</div><div class="mc-sub">Current</div><div class="mc-bar"><div class="mc-fill" style="width:30%"></div></div></div>
     </div>`;

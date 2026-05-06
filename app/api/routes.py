@@ -455,16 +455,16 @@ async def get_benchmark():
     """Comparison data: Adaptive Shield vs fail2ban vs nginx."""
     return {
         "comparison": [
-            {"feature": "Rate Limiting", "adaptive_shield": "Adaptive (EMA baseline)", "fail2ban": "Static threshold", "nginx": "Static req/s", "advantage": "shield"},
-            {"feature": "Detection Method", "adaptive_shield": "Multi-layer (fingerprint + anomaly + reputation)", "fail2ban": "Log pattern matching", "nginx": "Request counting", "advantage": "shield"},
-            {"feature": "Client Identification", "adaptive_shield": "Fingerprint (UA + headers + timing)", "fail2ban": "IP only", "nginx": "IP only", "advantage": "shield"},
-            {"feature": "Brute Force Protection", "adaptive_shield": "Progressive lockout + credential stuffing", "fail2ban": "Fixed ban after N failures", "nginx": "Not built-in", "advantage": "shield"},
-            {"feature": "IP Reputation", "adaptive_shield": "Scoring with exponential decay", "fail2ban": "Binary (banned/not)", "nginx": "None", "advantage": "shield"},
-            {"feature": "Anomaly Detection", "adaptive_shield": "Z-score + timing analysis", "fail2ban": "None", "nginx": "None", "advantage": "shield"},
-            {"feature": "Self-Learning", "adaptive_shield": "Yes (EMA baseline adaptation)", "fail2ban": "No", "nginx": "No", "advantage": "shield"},
-            {"feature": "Real-time Dashboard", "adaptive_shield": "Built-in (11 tabs, live charts)", "fail2ban": "CLI only", "nginx": "Basic status page", "advantage": "shield"},
-            {"feature": "Alert System", "adaptive_shield": "Telegram + structured logs", "fail2ban": "Email (basic)", "nginx": "Logs only", "advantage": "shield"},
-            {"feature": "Recovery", "adaptive_shield": "Auto (reputation decay)", "fail2ban": "Manual or timer", "nginx": "Automatic (window reset)", "advantage": "tie"},
+            {"feature": "Rate Limiting", "adaptive_shield": "Адаптивный (EMA базовая линия)", "fail2ban": "Статичный порог", "nginx": "Статичный req/s", "advantage": "shield"},
+            {"feature": "Метод обнаружения", "adaptive_shield": "Многоуровневый (отпечаток + аномалия + репутация)", "fail2ban": "Анализ паттернов логов", "nginx": "Подсчёт запросов", "advantage": "shield"},
+            {"feature": "Идентификация клиента", "adaptive_shield": "Отпечаток (UA + заголовки + тайминг)", "fail2ban": "Только IP", "nginx": "Только IP", "advantage": "shield"},
+            {"feature": "Brute Force защита", "adaptive_shield": "Прогрессивная блокировка + credential stuffing", "fail2ban": "Фиксированный бан после N попыток", "nginx": "Не встроен", "advantage": "shield"},
+            {"feature": "IP Репутация", "adaptive_shield": "Скоринг с экспоненциальным затуханием", "fail2ban": "Бинарный (забанен/нет)", "nginx": "Нет", "advantage": "shield"},
+            {"feature": "Обнаружение аномалий", "adaptive_shield": "Z-score + анализ тайминга", "fail2ban": "Нет", "nginx": "Нет", "advantage": "shield"},
+            {"feature": "Самообучение", "adaptive_shield": "Да (адаптация EMA baseline)", "fail2ban": "Нет", "nginx": "Нет", "advantage": "shield"},
+            {"feature": "Дашборд реального времени", "adaptive_shield": "Встроенный (11 вкладок, live графики)", "fail2ban": "Только CLI", "nginx": "Базовая страница статуса", "advantage": "shield"},
+            {"feature": "Система оповещений", "adaptive_shield": "Telegram + структурированные логи", "fail2ban": "Email (базовый)", "nginx": "Только логи", "advantage": "shield"},
+            {"feature": "Восстановление", "adaptive_shield": "Авто (затухание репутации)", "fail2ban": "Вручную или таймер", "nginx": "Авто (сброс окна)", "advantage": "tie"},
         ],
         "test_results": {
             "ddos_flood": {

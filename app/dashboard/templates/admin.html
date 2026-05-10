@@ -458,7 +458,7 @@ async function addUser(){
 
 function logout(){
   fetch('/api/logout',{method:'POST'}).then(()=>{
-    window.location.href = '/';
+    window.location.href = '/site/login.html';
   });
 }
 
